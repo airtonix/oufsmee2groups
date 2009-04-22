@@ -1,0 +1,38 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/../FrameXML/UI.xsd">
+	<Button name="oUF_Smee2_Groups_Party" inherits="SecureUnitButtonTemplate" hidden="true" virtual="true">
+		<Frames>
+			<Button name="$parent_Target" inherits="SecureUnitButtonTemplate">
+				<Anchors>
+					<Anchor point="BOTTOM" relativePoint="TOP" relativeTo="$parent">
+						<Offset>
+							<AbsDimension x="0" y="3"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Attributes>
+					<Attribute name="unitsuffix" type="string" value="target"/>
+					<Attribute name="unitprefix" type="string" value="party"/>
+					<Attribute name="useparent-unit" type="boolean" value="true"/>
+					<Attribute name="type1" type="string" value="target"/>
+					<Attribute name="initial-unitWatch" type="boolean" value="true"/>
+				</Attributes>
+			</Button>
+			<Button name="$parent_Pet" inherits="SecureUnitButtonTemplate">
+				<Anchors>
+					<Anchor point="TOP" relativePoint="BOTTOM" relativeTo="$parent">
+						<Offset>
+							<AbsDimension x="0" y="-3"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Attributes>
+					<Attribute name="unitsuffix" type="string" value="pet"/>
+					<Attribute name="unitprefix" type="string" value="party"/>
+					<Attribute name="useparent-unit" type="boolean" value="true"/>
+					<Attribute name="type1" type="string" value="pet"/>
+					<Attribute name="initial-unitWatch" type="boolean" value="true"/>
+				</Attributes>
+			</Button>
+		</Frames>
+	</Button>
+</Ui>

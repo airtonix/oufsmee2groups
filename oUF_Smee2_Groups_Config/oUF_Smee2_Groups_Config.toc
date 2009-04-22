@@ -1,0 +1,14 @@
+## Interface: 30100
+## Title: ouF_|cff336633Smee2|r_Groups_Config
+## Notes: raid & party layout for oUF.
+## Author: Smee
+## X-eMail: airtonix@gmail.com
+## Version: 30100.0081
+## RequiredDeps: oUF,  oUF_Smee2_Groups, oUF_TagEditor
+## OptionalDeps: SharedMedia
+## LoadOnDemand: 1
+
+embeds.xml
+core.lua
+methods.lua
+config.lua

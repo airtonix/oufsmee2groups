@@ -1,0 +1,20 @@
+## Interface: 30000
+## Title: ouF_|cff336633Smee2|r_Groups
+## Author: Smee
+## Version: 0.1
+## Notes: oUF layout.
+## SavedVariables: oUF_Smee2_GroupsDB
+## OptionalDeps: oUF_Banzai, oUF_HealComm, oUF_DebuffHighlight,oUF_SpellRange, oUF_ReadyCheck
+## RequiredDeps: oUF
+## DefaultState: enabled
+
+tags.lua
+
+Libs/utf8.lua
+settings.lua
+
+player-target-template.xml
+party-template.xml
+raid-template.xml
+
+core.lua

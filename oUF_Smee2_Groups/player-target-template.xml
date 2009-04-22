@@ -1,0 +1,44 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/../FrameXML/UI.xsd">
+	<Button name="oUF_Smee2_Groups_PlayerTarget" inherits="SecureUnitButtonTemplate" hidden="true" virtual="true">
+		<Attributes>
+			<Attribute name="unitprefix" type="string" value="playerTarget"/>
+			<Attribute name="unitsuffix" type="string" value="unit"/>
+		</Attributes>
+		<Frames>
+			<Button name="$parentTarget" inherits="SecureUnitButtonTemplate">
+				<Anchors>
+					<Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$parent">
+						<Offset>
+							<AbsDimension x="3" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Attributes>
+					<Attribute name="unitsuffix" type="string" value="target"/>
+					<Attribute name="useparent-unit" type="boolean" value="true"/>
+					<Attribute name="type1" type="string" value="target"/>
+					<Attribute name="initial-unitWatch" type="boolean" value="true"/>
+				</Attributes>
+
+				<Frames>
+					<Button name="$parentTarget" inherits="SecureUnitButtonTemplate">
+						<Anchors>
+							<Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$parent">
+								<Offset>
+									<AbsDimension x="3" y="0"/>
+								</Offset>
+							</Anchor>
+						</Anchors>
+						<Attributes>
+							<Attribute name="unitsuffix" type="string" value="target"/>
+							<Attribute name="useparent-unit" type="boolean" value="true"/>
+							<Attribute name="type1" type="string" value="target"/>
+							<Attribute name="initial-unitWatch" type="boolean" value="true"/>
+						</Attributes>
+					</Button>
+				</Frames>
+
+			</Button>
+		</Frames>
+	</Button>
+</Ui>
