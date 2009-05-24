@@ -1,30 +1,25 @@
-local _,playerClass = UnitClass("player")
-
-local numberize = function(val)
-    if(val >= 1e3) then
-        return ("%.1fk"):format(val / 1e3)
-    elseif (val >= 1e6) then
-        return ("%.1fm"):format(val / 1e6)
-    else
-        return val
+oUF.Tags["[raidhp]"] = function(u)
+    o = ""
+    if not(u == nil) then
+        local c, m, n= UnitHealth(u), UnitHealthMax(u), UnitName(u)
+        if UnitIsDead(u) then
+            o = "DEAD"
+        elseif not UnitIsConnected(u) then
+            o = "D/C"
+        elseif UnitIsAFK(u) then
+            o = "AFK"
+        elseif UnitIsGhost(u) then
+            o = "GHOST"
+        elseif(c >= m) then --full health , show the name
+            o = n:utf8sub(1,4)
+        elseif(UnitCanAttack("player", u)) then  --enemy, show the health percentage
+            o = math.floor(c/m*100+0.5).."%"
+        else --otherwise, show the missing health
+            o = "-"..string.numberize(m - c)
+        end
     end
+    return o
 end
+oUF.TagEvents["[raidhp]"] = "UNIT_HEALTH UNIT_MAXHEALTH PLAYER_FLAGS_CHANGED"
 
-function round(num, idp)
-    if idp and idp>0 then
-        local mult = 10^idp
-        return math.floor(num * mult + 0.5) / mult
-    end
-    return math.floor(num + 0.5)
-end
-function Hex(r, g, b)
-	if type(r) == "table" then
-		if r.r then r, g, b = r.r, r.g, r.b else r, g, b = unpack(r) end
-	end
-	return string.format("|cff%02x%02x%02x", r*255, g*255, b*255)
-end
---===========================--
-function NeedsIndicators(unit)
-    return ( not UnitIsGhost(unit) or not UnitIsDead(unit) or UnitIsConnected(unit))
-end
---===========================--
+ 

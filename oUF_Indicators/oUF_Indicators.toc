@@ -1,0 +1,10 @@
+## Interface: 30100
+## Title: oUF_Indicators
+## Author: Smee
+## Version: 0.1
+## Notes: oUF Plugin
+## RequiredDeps: oUF
+## DefaultState: enabled
+
+tags.lua
+oUF_Indicators.lua

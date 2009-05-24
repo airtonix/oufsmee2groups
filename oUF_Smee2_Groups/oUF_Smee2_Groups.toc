@@ -1,5 +1,5 @@
-## Interface: 30000
-## Title: ouF_|cff336633Smee2|r_Groups
+## Interface: 30100
+## Title: oUF_|cff336633Smee2|r_Groups
 ## Author: Smee
 ## Version: 0.1
 ## Notes: oUF layout.
@@ -8,13 +8,12 @@
 ## RequiredDeps: oUF
 ## DefaultState: enabled
 
-tags.lua
-
-Libs/utf8.lua
+utf8.lua
 settings.lua
 
 player-target-template.xml
 party-template.xml
 raid-template.xml
 
+tags.lua
 core.lua

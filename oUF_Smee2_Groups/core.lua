@@ -3,11 +3,32 @@ local _,playerClass = UnitClass("player")
 local tinsert = table.insert
 local layoutName = "oUF_Smee2_Groups"
 local addon_Settings = oUF_Smee2_Groups_Settings
-
 _G[layoutName] = LibStub("AceAddon-3.0"):NewAddon(layoutName, "AceConsole-3.0", "AceEvent-3.0")
 local addon = _G[layoutName];
 addon.PlayerTargetsList = {}
 
+
+local numberize = function(val)
+	if(type(val)~="number")then return end
+    if(val >= 1e3) then
+        return ("%.1fk"):format(val / 1e3)
+    elseif (val >= 1e6) then
+        return ("%.1fm"):format(val / 1e6)
+    else
+        return val
+    end
+end
+string.numberize =  numberize
+
+function round(num, idp)
+    if idp and idp>0 then
+        local mult = 10^idp
+        return math.floor(num * mult + 0.5) / mult
+    end
+    return math.floor(num + 0.5)
+end
+math.round = round
+	
 local LDB = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(layoutName, {
 	label = "|cFF006699oUF|r_|cFFFF3300Smee|r_Groups",
 	type = "launcher",
@@ -73,6 +94,11 @@ local menu = function(self)
 	end
 end
 
+local function updateBanzai(self, unit, aggro)
+	if self.unit ~= unit then return end
+	if aggro == 1 then self.BanzaiIndicator:Show()
+	else self.BanzaiIndicator:Hide() end
+end
 -- Threat Function
 function UpdateThreat(self, event, unit)
 	local unitTarget = (unit =='player' and "target" or unit.."target")
@@ -103,7 +129,7 @@ function combatFeedbackText(self)
 	self.CombatFeedbackText.maxAlpha = .8
 end
 
-local function updateBanzai(self, unit, aggro)
+local function updatew(self, unit, aggro)
 	if self.unit ~= unit then return end
 	if aggro == 1 then
 		self.BanzaiIndicator:Show()
@@ -156,12 +182,12 @@ local func = function(self, unit)
 
 	local db = addon.db.profile
 	self.groupType = self:GetParent().groupType
-	local  unitSuffix = (self:GetName():gmatch("_(.*)")() or 'unit'):lower()
+	self.groupTypeName = self:GetParent().groupName
 	
-	addon:Debug(self:GetParent():GetName() .. "[ "..tostring(self.groupType) .. " : " ..tostring(unitSuffix).." ]")
+--	addon:Debug(self:GetParent():GetName() .. "[ "..tostring(self.groupType) .. " : " .. self.groupTypeName .." ]")
 	
-	local groupDb = db.frames[self.groupType]	
-	self.db = groupDb[unitSuffix]
+	local groupDb = db.frames[self.groupType]
+	self.db = groupDb.unit -- (self.groupTypeName =="unit" and groupDb["unit"] or groupDb.group[self.groupTypeName])
 	
 	self:SetBackdrop(db.textures.backdrop)
 	self:SetBackdropColor(unpack(db.colors.backdropColors))	
@@ -247,11 +273,11 @@ local func = function(self, unit)
 
 	---Aggro Indicator
 	self.Banzai = updateBanzai
-	self.BanzaiIndicator = self.Health:CreateTexture(nil, "OVERLAY")
-	self.BanzaiIndicator:SetPoint("TOPRIGHT", self, 0, 0)
+	self.BanzaiIndicator = self.Health:CreateTexture(nil, "BORDER")
+	self.BanzaiIndicator:SetPoint("CENTER", self.Health.text, "CENTER", 0, 0)
 	self.BanzaiIndicator:SetHeight(4)
-	self.BanzaiIndicator:SetWidth(4)
-	self.BanzaiIndicator:SetTexture(1, .25, .25)
+	self.BanzaiIndicator:SetWidth(self.db.width - 4)
+	self.BanzaiIndicator:SetTexture(1, .25, .25,.8)
 	self.BanzaiIndicator:Hide()
 
 -- DebuffHightlight
@@ -273,10 +299,6 @@ local func = function(self, unit)
 	return self
 end
 
-function addon:Debug(msg)
-	if not self.enabledDebugMessages then return end
-	self:Print("|cFFFFFF00Debug : |r"..msg)
-end
 function addon:GetClassColor(unit)
 	local _,unitClass = UnitClass(unit)
 	return unpack(self.db.profile.colors.class[unitClass or "WARRIOR"])
@@ -333,36 +355,56 @@ function addon:toggleGroupLayout()
 	if(InCombatLockdown()) then
 		self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	else
-		local groups = self.units.raid.groups
+		local groups = self.units.raid.group
 		self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-		
-		if(GetNumRaidMembers() > 0) then
-			self:Debug("Showing raid frames")			
-			for index,frame in pairs(groups)do frame:Show() end
-			self.units.raid:Show()
-			self:updateRaidFrame()
-		end
-
-		if( GetNumPartyMembers() > 0 )then --there is party members to show
-			if(GetNumRaidMembers() > 0)then 
-				if not self.db.profile.frames.party.group.showInRaid then
-					self.units.party:Hide()
-				else
-					self.units.party:Show()
-				end
-			else
-				self:Debug("Showing party frames")
-				for index,frame in pairs(groups)do frame:Hide() end
-				self.units.party:Show()
-			end
-		end
+		self:updateRaidFrame()
+		self:updatePartyFrame()
 	end
 end
 
-function addon:updateRaidFrame()
- 
-	local db = self.db.profile.frames.raid
+function addon:updatePartyFrame()
+	if( GetNumPartyMembers() > 0 )then --there is party members to show
+		if(GetNumRaidMembers() > 0)then 
+			if not self.db.profile.frames.party.group.showInRaid then
+				self.units.party:Hide()
+			else
+				self.units.party:Show()
+			end
+		else
+			self:Debug("Showing party frames")
+			for index,frame in pairs(self.units.raid.group)do frame:Hide() end
+			self.units.party:Show()
+		end
+	else
+		self.units.party:Hide()
+	end
+end
+
+function addon:updateRaidFrame(padding,margin)
+	local padding = padding or 5
+	local margin = margin or 10
+	
 	local raidFrame = self.units.raid
+	if(GetNumRaidMembers() > 0) then
+		self:Debug("Showing raid frames")			
+		for index,frame in pairs(raidFrame.group)do frame:Show() end
+		raidFrame:Show()
+	else
+		self:Debug("Hiding raid frames")
+		for index,frame in pairs(raidFrame.group)do frame:Hide() end
+		raidFrame:Hide()
+		return
+	end
+
+	local db = self.db.profile.frames.raid
+	
+	raidFrame:SetPoint(
+		db.anchorFromPoint,
+		UIParent,
+		db.anchorToPoint,
+		db.anchorX,
+		db.anchorY)
+		
 	local roster = self:SubGroups()
 	local largestGroup=1
 	local largestNumberOfPartyMembers = 1
@@ -370,17 +412,19 @@ function addon:updateRaidFrame()
 	local firstGroupWithPeople = false
 	local bottomPoint, topPoint = {},{}
 	local numberOfGroupsWithPeople = 0
-
+	local group 
+	
 	for groupNumber,Population in ipairs(roster) do
 		-- determine the first and last group. for height
-		if(_G['oufraid'..groupNumber]~=nil)then
+		group = self.units.raid.group[self.groupMap[groupNumber]]
+		if(group~=nil)then
 			if Population > 0 then
 				numberOfGroupsWithPeople = numberOfGroupsWithPeople + 1
 				if not firstGroupWithPeople then
 					firstGroupWithPeople = groupNumber
 				end
 				lastGroupWithPeople = groupNumber
-				if Population > largestNumberOfPartyMembers then
+				if Population >= largestNumberOfPartyMembers then
 					self:Debug("Found larger group : ".. groupNumber .." :".. Population)
 					--determine the group with the largest amount of players for width
 						largestGroup = groupNumber
@@ -395,9 +439,21 @@ function addon:updateRaidFrame()
 	self:Debug("last group with people : "..lastGroupWithPeople)
 	self:Debug("number of groups with people : "..numberOfGroupsWithPeople)
 	
-	raidFrame:SetHeight((db.unit.height + db.unit.yOffSet) * lastGroupWithPeople - db.unit.yOffSet)
-	raidFrame:SetWidth((db.unit.width + db.unit.xOffSet) * largestNumberOfPartyMembers)
+	local top = db.unit.height * lastGroupWithPeople
+	local bottom = 0
+	local left = 0
+	local right = 0
+
+	local height = 0
+	for i=1,lastGroupWithPeople do 
+		height = height + (db.unit.height + db.group[self.groupMap[i]].anchorY)
+	end
+	height = height + db.group.One.anchorY
+	
+	raidFrame:SetHeight(height)
+	raidFrame:SetWidth((db.unit.width + db.unit.xOffSet) * largestNumberOfPartyMembers + db.unit.xOffSet)
 	raidFrame:Show()
+	
 end
 
 function addon:PLAYER_REGEN_ENABLED()
@@ -432,8 +488,13 @@ function  addon:PARTY_LEADER_CHANGED()
 	self:toggleGroupLayout()
 end
 
+function addon:Debug(msg)
+	if not self.enabledDebugMessages then return end
+	self:Print("|cFFFFFF00Debug : |r"..msg)
+end
 function addon:OnEnable()
     -- Called when the addon is enabled
+    self.units = {}
 	local db = self.db.profile
 	if not db.enabled then
 		self:Debug("Disabling")
@@ -441,26 +502,35 @@ function addon:OnEnable()
 		return
 	end	
 	self.enabledDebugMessages = false
-	db.frames.unlocked = false
-
+	self.groupMap = {
+		[1]	= "One",
+		[2]	= "Two",
+		[3]	= "Three",
+		[4]	= "Four",
+		[5]	= "Five",
+		[6]	= "Six",
+		[7]	= "Seven",
+		[8]	= "Eight",
+	}
+	
     oUF:RegisterStyle("group", func)
     oUF:SetActiveStyle"group"
-    
     oUF.indicatorFont = oUF.indicatorFont or db.indicatorFont   
 	local raidSettings = db.frames.raid
 	local raidFrame = CreateFrame('Frame', 'oufraid', UIParent)
-				raidFrame.groups = {}
 				raidFrame:SetBackdrop(db.textures.backdrop)
 				raidFrame:SetBackdropColor(unpack(db.colors.backdropColors))
 			 	raidFrame:EnableMouse(true)
-
+				raidFrame.db = db.frames.raid
 	self.units.raid = raidFrame
-	self.units.raid.groups={}
-	for index,data in pairs(raidSettings.group) do
+	self.units.raid.group = {}
+	local data
+	for index,name in ipairs(self.groupMap) do
+		data = raidSettings.group[name]
 		if(data.visible) then 
-			local group = oUF:Spawn('header', 'oufraid'..index)
+			local group = oUF:Spawn('header', 'oufraid_'..name)
 			group:SetManyAttributes(
-			"template",				"oUF_Smee2_Groups_Raid",			"groupFilter",				index,
+			"template",				"oUF_Smee2_Groups_Raid",			"groupFilter",				data.groupFilter,
 			"showRaid",					true,
 			"showPlayer", 			true,
 			"yOffSet",					raidSettings.unit.yOffSet,
@@ -469,14 +539,14 @@ function addon:OnEnable()
 			"initial-height",  		raidSettings.unit.height,
 			"initial-width", 			raidSettings.unit.width,
 			"showPlayer", 			true)
-			table.insert(self.units.raid.groups, group)
 			group.groupType = 'raid'
+			group.groupName = name
+			self:Debug(index..":"..name)
+			self.units.raid.group[name] = group
 			group:SetPoint(data.anchorFromPoint,
-					self.units.raid.groups[data.anchorTo] or self.units.raid,
-					data.anchorToPoint,
-					data.anchorX,
-					data.columnSpacing)			
-			self.units.raid.groups[index] = group
+					self.units.raid.group[data.anchorTo] or self.units.raid,
+					data.anchorToPoint, data.anchorX, data.anchorY)
+					
 			group:SetFrameLevel(0)
 			group:SetParent(raidFrame)
 		end
@@ -488,11 +558,10 @@ function addon:OnEnable()
 		raidSettings.anchorToPoint,
 		raidSettings.anchorX,
 		raidSettings.anchorY)
-
+	raidFrame:SetScale(raidSettings.scale)
 
   	local partySettings = db.frames.party
     self.units.party = oUF:Spawn("header", "oufparty")
-    self.units.party.groupType = 'party'
 	self.units.party:SetPoint(
 			partySettings.group.anchorFromPoint,
 			UIParent,
@@ -509,6 +578,8 @@ function addon:OnEnable()
 	    "point",				partySettings.unit.anchorFromPoint,
 	    "initial-height", 	partySettings.unit.height,
 	    "initial-width", 	partySettings.unit.width)
+    self.units.party.groupType = 'party'
+    self.units.party.groupName = 'unit'
 	self:toggleGroupLayout()
 	self:RegisterEvent('ZONE_CHANGED')
 	self:RegisterEvent('PARTY_LEADER_CHANGED')
