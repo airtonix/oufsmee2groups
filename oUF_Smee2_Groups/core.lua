@@ -5,8 +5,15 @@ local layoutName = "oUF_Smee2_Groups"
 local addon_Settings = oUF_Smee2_Groups_Settings
 _G[layoutName] = LibStub("AceAddon-3.0"):NewAddon(layoutName, "AceConsole-3.0", "AceEvent-3.0")
 local addon = _G[layoutName];
-addon.PlayerTargetsList = {}
+	GlobalObject = {}
+	addon.LSM = LibStub("LibSharedMedia-3.0")
+	addon.build = {}
+	addon.build.version, addon.build.build, addon.build.date, addon.build.tocversion = GetBuildInfo()
+	addon.PlayerTargetsList = {}
 
+function addon:SaveObjectForDebug(obj)
+	GlobalObject[#GlobalObject+1] = obj
+end
 
 local numberize = function(val)
 	if(type(val)~="number")then return end
@@ -59,23 +66,6 @@ function LDB.OnTooltipShow(tt)
 	tt:AddLine("Ctrl + Alt + Left Click : Toggle Debug Messages")
 end
 
-function round(num, idp)
-  if idp and idp>0 then
-    local mult = 10^idp
-    return math.floor(num * mult + 0.5) / mult
-  end
-  return math.floor(num + 0.5)
-end
-
-local numberize = function(val)
-	if(val >= 1e3) then
-        return ("%.1fk"):format(val / 1e3)
-	elseif (val >= 1e6) then
-		return ("%.1fm"):format(val / 1e6)
-	else
-		return val
-	end
-end
 
 local function Hex(r, g, b)
 	if type(r) == "table" then
@@ -83,6 +73,7 @@ local function Hex(r, g, b)
 	end
 	return string.format("|cff%02x%02x%02x", r*255, g*255, b*255)
 end
+addon.Hex = Hex
 
 local menu = function(self)
 	local unit = self.unit:sub(1, -2)
@@ -111,14 +102,10 @@ function UpdateThreat(self, event, unit)
 end
 
 local updateHealth = function(self, event, unit, bar, min, max)
-  if(max ~= 0)then
-   r,g,b = self.ColorGradient((min/max), .9,.1,.1, .8,.8,.1, 1,1,1)
-  end
-  bar.text:SetTextColor(r,g,b)
   if UnitIsDeadOrGhost(unit) or not UnitIsConnected(unit) then
-    bar.bg:SetVertexColor(0.3, 0.3, 0.3)
+	self.Health.bg:SetVertexColor(0.3, 0.3, 0.3)
   else
-    bar.bg:SetVertexColor(addon:GetClassColor(unit))
+	self.Health.bg:SetVertexColor(addon:GetClassColor(unit))
   end
 end
 
@@ -129,7 +116,7 @@ function combatFeedbackText(self)
 	self.CombatFeedbackText.maxAlpha = .8
 end
 
-local function updatew(self, unit, aggro)
+local function updatebanzai(self, unit, aggro)
 	if self.unit ~= unit then return end
 	if aggro == 1 then
 		self.BanzaiIndicator:Show()
@@ -138,28 +125,61 @@ local function updatew(self, unit, aggro)
 	end
 end
 
-local function makeFontObject(self,object,desc)
-	local db = addon.db.profile
-	local parent = self.elements[self.db.FontObjects[object].anchorTo] or self
+function addon:makeFontObject(frame,name,data)
+	local db = addon.db.profile	
+	local parent = frame.elements and frame.elements[data.anchorTo] or frame
 	
+	-- make our font object, parenting it to the supplied anchor point.
 	local fontObject = parent:CreateFontString(nil, "OVERLAY")
-			fontObject:SetJustifyH(self.db.FontObjects[object].justifyH)
-			fontObject:SetJustifyV(self.db.FontObjects[object].justifyV)
-			fontObject:SetAlpha(1)
-			fontObject:SetFont(db.fonts['default'].name, db.fonts['default'].size, db.fonts['default'].outline)
-			fontObject:SetPoint(self.db.FontObjects[object].anchorFromPoint, parent, 
-					self.db.FontObjects[object].anchorToPoint,
-					self.db.FontObjects[object].anchorX, 
-					self.db.FontObjects[object].anchorY)
-					
-	fontObject.tag = self.db.FontObjects[object].tag
-	self:Tag(fontObject, fontObject.tag)
+			  fontObject:SetJustifyH(data.justifyH)
+			  fontObject:SetJustifyV(data.justifyV)
+			  fontObject:SetPoint(data.anchorFromPoint, parent,data.anchorToPoint, data.anchorX, data.anchorY)
 
-	self.FontObjects[object] = { 
-			name = desc,
-			object = fontObject
+			  local fontDb = data.font -- setting this to the global font option for now, till i work out a per-frame policy.
+			  self:SaveObjectForDebug(data)
+			  fontObject:SetFont(addon.LSM:Fetch(addon.LSM.MediaType.FONT, data.name),data.size,data.outline) 
+
+
+	-- if the parent frame is the unitframe and therefore has an UpdateTag function, use it.			
+	if(frame.Tag~=nil and data.tag~=nil)then
+		fontObject.tag = data.tag
+		frame:Tag(fontObject, data.tag)
+	end
+	
+	-- store the fontobject in the parent frames fontobject table.
+	if(frame.FontObjects)then
+		frame.FontObjects[name] = {
+				name = data.desc,
+				object = fontObject
 		}
+	end
+	
 	return fontObject
+end
+
+function addon:UpdateFontObjects(obj,size,name,outline)
+	local db = self.db.profile.frames[obj.groupType].unit.FontObjects
+
+	if obj~=nil and obj.FontObjects then	
+		for index,font in pairs(obj.FontObjects)do
+			if(font.object:GetObjectType() == "FontString" and db[index]~=nil)then
+				font.object:SetFont(addon.LSM:Fetch(addon.LSM.MediaType.FONT, db[index].name),db[index].size,db[index].outline) 
+			end
+		end
+
+	else
+
+		if size~= nil then db.frames.font.size = size end
+		if name~= nil then db.frames.font.name = name end
+		if outline~= nil then db.frames.font.outline = outline end
+		
+		for index,frame in pairs(addon.units)do
+			if frame.unit ~= nil then 
+				self:UpdateFontObjects(frame)
+			end
+		end
+	end
+	
 end
 
 -- Style
@@ -185,12 +205,18 @@ local func = function(self, unit)
 	self.groupTypeName = self:GetParent().groupName
 	
 --	addon:Debug(self:GetParent():GetName() .. "[ "..tostring(self.groupType) .. " : " .. self.groupTypeName .." ]")
-	
+	local fontDb
 	local groupDb = db.frames[self.groupType]
 	self.db = groupDb.unit -- (self.groupTypeName =="unit" and groupDb["unit"] or groupDb.group[self.groupTypeName])
-	
-	self:SetBackdrop(db.textures.backdrop)
-	self:SetBackdropColor(unpack(db.colors.backdropColors))	
+
+	self.textures = {
+		background = db.textures.backgrounds[self.db.textures.background],
+		statusbar = addon.LSM:Fetch('statusbar',self.db.textures.statusbar),
+		border = db.textures.borders[self.db.textures.border],
+	}
+
+	self:SetBackdrop(self.textures.background)
+	self:SetBackdropColor( unpack(db.colors.backdropColors) )	
 	
 	
 	self:SetAttribute('initial-height', self.db.height)
@@ -201,42 +227,26 @@ local func = function(self, unit)
 --==========--
 	self.Health = CreateFrame("StatusBar", nil, self) -- CreateFrame"StatusBar"
 	self.Health:SetHeight( self.db.height)
-	self.Health:SetStatusBarTexture(db.textures.statusbar)
+	self.Health:SetStatusBarTexture(self.textures.statusbar)
 	self.Health:SetOrientation("VERTICAL")
 
 	self.Health:SetStatusBarColor(0, 0, 0)
-	self.Health:SetAlpha(.6)
+	self.Health:SetAlpha(.5)
 	self.Health.frequentUpdates = true
 
 	self.Health:SetParent(self)
 	self.Health:SetPoint"TOPLEFT"
 	self.Health:SetPoint"BOTTOMRIGHT"
 
-	self.Health.bg = self.Health:CreateTexture(nil, "BORDER")
+	self.Health.bg = self:CreateTexture(nil, "BORDER")
 	self.Health.bg:SetAllPoints(self.Health)
-	self.Health.bg:SetTexture(db.textures.statusbar)
+	local hpbg = self.db.bars.health.bgColor
+	self.Health.bg:SetTexture(hpbg[1],hpbg[2],hpbg[3],hpbg[4])
 
---	self.Health.text = makeFontObject(self,'health','Health')
-  -- Health Text
-  self.Health.text = self.Health:CreateFontString(nil, "OVERLAY")
-  self.Health.text:SetFont(db.fonts['default'].name, db.fonts['default'].size, db.fonts['default'].outline)
-  self.Health.text:SetShadowOffset(0,-1)
-  self.Health.text:SetPoint("CENTER")
-  self.Health.text:SetJustifyH("CENTER")
-  self.Health.text.tag = "[raidhp]"
-  self:Tag(self.Health.text, self.Health.text.tag)
-
-  if(unitSuffix ~='target' or unitSuffix~='pet') then
-  	self.AFK={}
-	self.AFK.object = self.Health.text
-	self.AFK.Tagger=self
-	self.AFK.fontFormat = "%s:%s"
-	self.DC={}
-	self.DC.object = self.Health.text
-	self.DC.Tagger=self
-	self.DC.fontFormat = "%s:%s"
-  end
-
+	for index, data in pairs(self.db.FontObjects) do
+		addon:makeFontObject(self,index,data)
+	end
+	
 	self.OverrideUpdateHealth = updateHealth
 --==========--
 --	ICONS	--
@@ -311,6 +321,22 @@ function addon:OpenConfig(input)
 	LibStub("AceConfigDialog-3.0"):Open(configName)
 end
 
+
+function addon:ImportSharedMedia()
+	if(self.LSM) then self.SharedMediaActive = true else return end
+	for name,path in pairs(self.db.profile.textures.statusbars)do
+		self.LSM:Register(self.LSM.MediaType.STATUSBAR, name, path)
+	end
+	
+	for name,path in pairs(self.db.profile.textures.borders)do
+		self.LSM:Register(self.LSM.MediaType.BORDER, name, path)
+	end
+	
+	for name,data in pairs(self.db.profile.fonts)do
+		self.LSM:Register(self.LSM.MediaType.FONT, name, data.name)
+	end
+end
+
 function addon:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New(layoutName.."DB",addon_Settings)
 	self.enabledDebugMessages = addon.db.profile.enabledDebugMessages
@@ -320,7 +346,7 @@ function addon:OnInitialize()
 	self:RegisterChatCommand("oufsmeegroups", "OpenConfig")
 	self:RegisterChatCommand("rl", "reloadui")
 	self:RegisterChatCommand("rgfx", "reloadgfx")
---	self:ImportSharedMedia()
+	self:ImportSharedMedia()
 
 end
 
@@ -489,8 +515,9 @@ function  addon:PARTY_LEADER_CHANGED()
 end
 
 function addon:Debug(msg)
-	if not self.enabledDebugMessages then return end
-	self:Print("|cFFFFFF00Debug : |r"..msg)
+	if self.enabledDebugMessages then
+		self:Print("|cFFFFFF00Debug : |r"..msg)
+	end
 end
 function addon:OnEnable()
     -- Called when the addon is enabled
@@ -518,7 +545,7 @@ function addon:OnEnable()
     oUF.indicatorFont = oUF.indicatorFont or db.indicatorFont   
 	local raidSettings = db.frames.raid
 	local raidFrame = CreateFrame('Frame', 'oufraid', UIParent)
-				raidFrame:SetBackdrop(db.textures.backdrop)
+				raidFrame:SetBackdrop(db.textures.backgrounds.default)
 				raidFrame:SetBackdropColor(unpack(db.colors.backdropColors))
 			 	raidFrame:EnableMouse(true)
 				raidFrame.db = db.frames.raid

@@ -8,6 +8,8 @@
 ## RequiredDeps: oUF
 ## DefaultState: enabled
 
+embeds.xml
+
 utf8.lua
 settings.lua
 

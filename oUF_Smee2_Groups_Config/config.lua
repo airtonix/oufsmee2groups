@@ -20,34 +20,51 @@ config.options = {
 }
 
 function config:SetupRaidOptions()
+	local db = self.addon.db.profile
 	local options ={
 		["raid"] = {
 			name = "Raid", desc = "Raid Frames Setup",
 			type = 'group',
+			get = "GetOption", set = "SetOption",
 			args = { 
 					["lock"] = {
 						name = "Lock Frame Positions",desc = "Toggles on/off Frame Lock, allowing you to drag the frames around.",
 						type = 'toggle', order = 1,
-						get = "GetOption", set = "SetOption",
 					},
 					["scale"] = {
 						type = "range", order = 2,
 						name = "Frame Scale", desc = "Global frame scale.",
 						min = 0.1,	max = 2.0, step = 0.01,
-						get = "GetOption", set = "SetOption",
 					},
+					
 					["group"] =  {
 						name = "Groups", desc = "Raid Units Setup",
 						type = 'group',
-						get = 'GetUnitOption', set = 'SetUnitOption',
 						args = { 
 						},
 					},
 					["unit"] =  {
 						name = "Units", desc = "Raid Units Setup",
 						type = 'group',
-						get = 'GetUnitOption', set = 'SetUnitOption',
 						args = { 
+							["FontObjects"] =  {
+								name = "Texts", desc = "Text Elements",
+								type = 'group',
+								args = {},
+							},
+							["textures"] =  {
+								name = "Textures", desc = "Text Elements",
+								type = 'group',
+								args = {
+									["statusbar"] = {
+										type = "select",
+										name = "Statusbar",
+										dialogControl = 'LSM30_Statusbar',										disabled = not config.addon.SharedMediaActive,						 				desc = "Texture to use on the bars.",
+										values = AceGUIWidgetLSMlists.statusbar,
+										order=26,
+									},
+								},
+							},
 							["headerSize"] = {
 								type = "header",
 								name = "Size",
@@ -108,12 +125,53 @@ function config:SetupRaidOptions()
 			},
 		},	
 	}
+	local label
 
-	for index,group in pairs(self.addon.units.raid.group)do
-		tableExtend(options.raid.args.group.args,{
-			[tostring(index)] = {
+	for index,object in pairs(db.frames.raid.unit.FontObjects)do
+		label = tostring(index);
+		tableExtend(options.raid.args.unit.args.FontObjects.args,{
+			[label] = {
 				type = "group",
 				name = tostring(index),
+				disabled ='CheckGroupOption',
+				get = "GetFontOption", set = "SetFontOption",
+				args = {
+					["header"..label] = {
+						type = "header",
+						name = "FontObject : "..label,
+						order=1,
+					},
+					["name"] = {
+						type = "select",
+						name = "Fontface",
+						dialogControl = 'LSM30_Font',						disabled = not config.addon.SharedMediaActive,		 				desc = "Fontface to use on the bars.",
+						values = AceGUIWidgetLSMlists.font,
+						order=16,
+					},						
+					["outline"] = {
+						type = "select",
+						name = "Outline", desc = "font options, typically outline types",
+						values = config.fontOutlineTypes,	
+						order = 17,
+					},
+					["size"] = {
+						name = "Font Size",desc = "Change the font size, note this is affected by your ui-scale in video settings.",
+						type = "range", min = 1,max = 48.0, step = 0.1, 
+						order = 18,
+					},
+					
+				},
+			}			
+		})
+	end
+	
+
+	for index,group in pairs(self.addon.units.raid.group)do
+		label = tostring(index);
+		tableExtend(options.raid.args.group.args,{
+			[label] = {
+				type = "group",
+				name = label,
 				disabled ='CheckGroupOption',
 				get = "GetGroupOption", set = "SetGroupOption",
 				args={

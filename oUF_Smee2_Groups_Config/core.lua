@@ -26,8 +26,9 @@ function configAddon:numberize(val)
 end
 
 function configAddon:Debug(msg)
---	if not addon.db.profile.enabledDebugMessages then return end
-	self:Print("|cFFFFFF00Debug : |r"..tostring(msg))
+	if addon.db.profile.enabledDebugMessages then
+		self:Print("|cFFFFFF00Debug : |r"..tostring(msg))
+	end
 end
 
 function configAddon:OnInitialize()
@@ -46,7 +47,7 @@ end
 function configAddon:OnDisable()
  	self:Debug("Disabling")
    -- Called when the addon is disabled
-	db = self.db.profile
+	local db = self.db.profile
 	if db.enabled then
 		db.enabled = false
 		return

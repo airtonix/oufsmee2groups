@@ -42,17 +42,21 @@ oUF_Smee2_Groups_Settings = {
 			trivial = '%s |cff%02x%02x%02x%s|r',
 		},
 		textures = {
-			backdrop = {
-				bgFile = "Interface\\Addons\\oUF_Smee2_Groups\\media\\white", tile = true, tileSize = 16,
-				insets = {left = -1.5, right = -1.5, top = -1.5, bottom = -1.5},
+			backgrounds = {
+				default = {
+					bgFile = "Interface\\BUTTONS\\WHITE8x8", tile = true, tileSize = 16,
+					insets = {left = -1.5, right = -1.5, top = -1.5, bottom = -1.5},
+				},
 			},
-			statusbar = "Interface\\Addons\\oUF_Smee2_Groups\\media\\gradient",
-			border = "Interface\\Addons\\oUF_Smee2_Groups\\media\\border",
+			statusbars = {
+				groupsGradient	= "Interface\\Addons\\oUF_Smee2_Groups\\media\\statusbars\\gradient",
+			},
+			borders = {
+				groupsBorder = "Interface\\Addons\\oUF_Smee2_Groups\\media\\borders\\border",
+			},
 		},
 		fonts = { 
-			default = {
-				size = 8.5, name = "Interface\\Addons\\oUF_Smee2_Groups\\media\\visitor.ttf", outline = "OUTLINE" ,
-			},
+			default ="Interface\\Addons\\oUF_Smee2_Groups\\media\\fonts\\visitor.ttf"
 		},
 		auras = {
 			playerScale = 1.4,
@@ -229,6 +233,12 @@ oUF_Smee2_Groups_Settings = {
 							justifyH = "CENTER",
 							justifyV = "MIDDLE",
 							tag = "[raidhp]",
+							desc = "Name",
+							font = {
+								size =9,
+								name = 'visitor',
+								outline = '',
+							}
 						},
 						threat = {
 							enabled = true,
@@ -240,6 +250,12 @@ oUF_Smee2_Groups_Settings = {
 							justifyH = "CENTER",
 							justifyV = "BOTTOM",
 							tag = "[threat]",
+							desc = "Threat",
+							font = {
+								size = 8.5,
+								name = 'default',
+								outline = '',
+							}
 						},
 					},
 					bars = {
@@ -248,8 +264,16 @@ oUF_Smee2_Groups_Settings = {
 							width = 51,
 							height = 51,
 							colorDisconnected = true,
-							colorClass = true,
+							colorClass = false,
+							colorTapping = true,
 							colorReaction = true,
+							dependantOnFrameSize = true,
+							classFilter = false,
+							reverse = false,
+							bgColor = {1,1,1,.3},
+							StatusBarColor = {0.25,0.25,0.25,1},
+							BackdropColor = {0,0,0,1},
+							Backdrop = "default",
 						},
 						power = {
 							enabled = false,
@@ -259,10 +283,22 @@ oUF_Smee2_Groups_Settings = {
 							colorClass = true,
 							colorTapping = false,
 							colorReaction = false,
+							dependantOnFrameSize = true,
+							classFilter = false,
+							reverse = false,
+							bgColor = {1,1,1,.3},
+							StatusBarColor = {0.25,0.25,0.25,1},
+							BackdropColor = {0,0,0,1},
+							Backdrop = "default",
 						},
 					},
 					DebuffHighlightBackdrop = true,
 					disallowVehicleSwap = true,
+					textures = {
+						background = 'default',
+						statusbar = 'groupsGradient',
+						border = 'groupsBorder',
+					},
 				},
 			},
 			party = {
@@ -309,6 +345,12 @@ oUF_Smee2_Groups_Settings = {
 								justifyH = "CENTER",
 								justifyV = "MIDDLE",
 								tag = "[raidhp]",
+								desc = "Name",
+								font = {
+									size = 8.5,
+									name = 'default',
+									outline = '',
+								}
 							},
 							threat = {
 								enabled = true,
@@ -320,6 +362,12 @@ oUF_Smee2_Groups_Settings = {
 								justifyH = "CENTER",
 								justifyV = "BOTTOM",
 								tag = "[threat]",
+								desc = "Threat",
+								font = {
+									size = 8.5,
+									name = 'default',
+									outline = '',
+								}
 							},
 						},
 						bars = {
@@ -330,6 +378,13 @@ oUF_Smee2_Groups_Settings = {
 								colorDisconnected = true,
 								colorClass = true,
 								colorReaction = true,
+								dependantOnFrameSize = true,
+								classFilter = false,
+								reverse = false,
+								bgColor = {1,1,1,.3},
+								StatusBarColor = {0.25,0.25,0.25,1},
+								BackdropColor = {0,0,0,1},
+								Backdrop = "default",
 							},
 							power = {
 								enabled = false,
@@ -339,10 +394,22 @@ oUF_Smee2_Groups_Settings = {
 								colorClass = true,
 								colorTapping = false,
 								colorReaction = false,
+								dependantOnFrameSize = true,
+								classFilter = false,
+								reverse = false,
+								bgColor = {1,1,1,.3},
+								StatusBarColor = {0.25,0.25,0.25,1},
+								BackdropColor = {0,0,0,1},
+								Backdrop = "default",
 							},
 						},
 						DebuffHighlightBackdrop = true,
 						disallowVehicleSwap = true,
+						textures = {
+							background = 'default',
+							statusbar = 'groupsGradient',
+							border = 'groupsBorder',
+						},
 					},
 					target = {
 						yOffSet = 3,
@@ -372,6 +439,12 @@ oUF_Smee2_Groups_Settings = {
 								justifyH = "CENTER",
 								justifyV = "MIDDLE",
 								tag = "[raidhp]",
+								desc = "Name",
+								font = {
+									size = 8.5,
+									name = 'default',
+									outline = '',
+								}
 							},
 							threat = {
 								enabled = true,
@@ -383,6 +456,12 @@ oUF_Smee2_Groups_Settings = {
 								justifyH = "CENTER",
 								justifyV = "BOTTOM",
 								tag = "[threat]",
+								desc = "Threat",
+								font = {
+									size = 8.5,
+									name = 'default',
+									outline = '',
+								}
 							},
 						},
 						bars = {
@@ -393,6 +472,13 @@ oUF_Smee2_Groups_Settings = {
 								colorDisconnected = true,
 								colorClass = true,
 								colorReaction = true,
+								dependantOnFrameSize = true,
+								classFilter = false,
+								reverse = false,
+								bgColor = {1,1,1,.3},
+								StatusBarColor = {0.25,0.25,0.25,1},
+								BackdropColor = {0,0,0,1},
+								Backdrop = "default",
 							},
 							power = {
 								enabled = false,
@@ -402,6 +488,13 @@ oUF_Smee2_Groups_Settings = {
 								colorClass = true,
 								colorTapping = false,
 								colorReaction = false,
+								dependantOnFrameSize = true,
+								classFilter = false,
+								reverse = false,
+								bgColor = {1,1,1,.3},
+								StatusBarColor = {0.25,0.25,0.25,1},
+								BackdropColor = {0,0,0,1},
+								Backdrop = "default",
 							},
 						},
 						DebuffHighlightBackdrop = true,
@@ -435,6 +528,12 @@ oUF_Smee2_Groups_Settings = {
 								justifyH = "CENTER",
 								justifyV = "MIDDLE",
 								tag = "[raidhp]",
+								desc = "Name",
+								font = {
+									size = 8.5,
+									name = 'default',
+									outline = '',
+								}
 							},
 							threat = {
 								enabled = true,
@@ -446,6 +545,12 @@ oUF_Smee2_Groups_Settings = {
 								justifyH = "CENTER",
 								justifyV = "BOTTOM",
 								tag = "[threat]",
+								desc = "Threat",
+								font = {
+									size = 8.5,
+									name = 'default',
+									outline = '',
+								}
 							},
 						},
 						bars = {
@@ -456,6 +561,13 @@ oUF_Smee2_Groups_Settings = {
 								colorDisconnected = true,
 								colorClass = true,
 								colorReaction = true,
+								dependantOnFrameSize = true,
+								classFilter = false,
+								reverse = false,
+								bgColor = {1,1,1,.3},
+								StatusBarColor = {0.25,0.25,0.25,1},
+								BackdropColor = {0,0,0,1},
+								Backdrop = "default",
 							},
 							power = {
 								enabled = false,
@@ -465,6 +577,13 @@ oUF_Smee2_Groups_Settings = {
 								colorClass = true,
 								colorTapping = false,
 								colorReaction = false,
+								dependantOnFrameSize = true,
+								classFilter = false,
+								reverse = false,
+								bgColor = {1,1,1,.3},
+								StatusBarColor = {0.25,0.25,0.25,1},
+								BackdropColor = {0,0,0,1},
+								Backdrop = "default",
 							},
 						},
 						DebuffHighlightBackdrop = true,
@@ -509,6 +628,12 @@ oUF_Smee2_Groups_Settings = {
 							justifyH = "RIGHT",
 							justifyV = "MIDDLE",
 							tag = "[name]",
+							desc = "Name",
+							font = {
+								size = 8.5,
+								name = 'default',
+								outline = '',
+							}
 						},
 						threat = {
 							enabled = true,
@@ -520,6 +645,12 @@ oUF_Smee2_Groups_Settings = {
 							justifyH = "CENTER",
 							justifyV = "MIDDLE",
 							tag = "[threat]",
+							desc = "Threat",
+							font = {
+								size = 8.5,
+								name = 'default',
+								outline = '',
+							}
 						},
 					},
 					bars = {
@@ -530,6 +661,13 @@ oUF_Smee2_Groups_Settings = {
 							colorDisconnected = true,
 							colorClass = true,
 							colorReaction = true,
+							dependantOnFrameSize = true,
+							classFilter = false,
+							reverse = false,
+							bgColor = {1,1,1,.3},
+							StatusBarColor = {0.25,0.25,0.25,1},
+							BackdropColor = {0,0,0,1},
+							Backdrop = "default",
 						},
 						power = {
 							enabled = false,
@@ -539,10 +677,22 @@ oUF_Smee2_Groups_Settings = {
 							colorClass = true,
 							colorTapping = false,
 							colorReaction = false,
+							dependantOnFrameSize = true,
+							classFilter = false,
+							reverse = false,
+							bgColor = {1,1,1,.3},
+							StatusBarColor = {0.25,0.25,0.25,1},
+							BackdropColor = {0,0,0,1},
+							Backdrop = "default",
 						},
 					},
 					DebuffHighlightBackdrop = true,
 					disallowVehicleSwap = true,
+					textures = {
+						background = 'default',
+						statusbar = 'groupsGradient',
+						border = 'groupsBorder',
+					},
 				},
 				target = {
 					yOffSet = 1,
@@ -572,6 +722,12 @@ oUF_Smee2_Groups_Settings = {
 							justifyH = "RIGHT",
 							justifyV = "MIDDLE",
 							tag = "[name]",
+							desc = "Name",
+							font = {
+								size = 8.5,
+								name = 'default',
+								outline = '',
+							}
 						},
 						threat = {
 							enabled = true,
@@ -583,6 +739,12 @@ oUF_Smee2_Groups_Settings = {
 							justifyH = "CENTER",
 							justifyV = "MIDDLE",
 							tag = "[threat]",
+							desc = "Threat",
+							font = {
+								size = 8.5,
+								name = 'default',
+								outline = '',
+							}
 						},
 					},
 					bars = {
@@ -593,6 +755,13 @@ oUF_Smee2_Groups_Settings = {
 							colorDisconnected = true,
 							colorClass = true,
 							colorReaction = true,
+							dependantOnFrameSize = true,
+							classFilter = false,
+							reverse = false,
+							bgColor = {1,1,1,.3},
+							StatusBarColor = {0.25,0.25,0.25,1},
+							BackdropColor = {0,0,0,1},
+							Backdrop = "default",
 						},
 						power = {
 							enabled = false,
@@ -602,6 +771,13 @@ oUF_Smee2_Groups_Settings = {
 							colorClass = true,
 							colorTapping = false,
 							colorReaction = false,
+							dependantOnFrameSize = true,
+							classFilter = false,
+							reverse = false,
+							bgColor = {1,1,1,.3},
+							StatusBarColor = {0.25,0.25,0.25,1},
+							BackdropColor = {0,0,0,1},
+							Backdrop = "default",
 						},
 					},
 					DebuffHighlightBackdrop = true,

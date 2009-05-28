@@ -69,16 +69,20 @@ function configAddon:GetOption(info)
 	local setting = info[#info]
 	local object,output
 
-	if info[1] == "raid" then
-		-- raid stuff blah
-		profile = profile.raid
-		output	= profile[setting]
-	elseif info[1] == "party" then
-	elseif info[1] == "maintank" then
-	elseif info[1] == "playerTargets" then
-	end
-	
---	self:Debug("\n GetOption : "..self:concatLeaves(info))
+	if(#info >= 1)then output = profile end
+	if(#info >= 2)then output = output[info[1]] end
+	if(#info >= 3)then output = output[info[2]] end
+	if(#info >= 4)then output = output[info[3]] end
+	if(#info >= 5)then output = output[info[4]] end	
+	if(#info >= 6)then output = output[info[5]] end
+	if(#info >= 7)then output = output[info[6]] end
+	if(#info >= 8)then output = output[info[7]] end
+
+	output = output[setting]
+
+	GlobalObject[#GlobalObject] = output
+
+	self:Debug("\n GetOption : "..self:concatLeaves(info))
 	
 	return output
 end
@@ -89,6 +93,15 @@ function configAddon:SetOption(info,value)
 	local profile = addon.db.profile.frames
 	local setting = info[#info]
 	local object,output
+
+	if(#info >= 1)then output = profile end
+	if(#info >= 2)then output = output[info[1]] end
+	if(#info >= 3)then output = output[info[2]] end
+	if(#info >= 4)then output = output[info[3]] end
+	if(#info >= 5)then output = output[info[4]] end	
+	if(#info >= 6)then output = output[info[5]] end
+	if(#info >= 7)then output = output[info[6]] end
+	if(#info >= 8)then output = output[info[7]] end
 
 	if info[1] == "raid" then
 		object	= addon.units.raid
@@ -105,7 +118,7 @@ function configAddon:SetOption(info,value)
 	elseif info[1] == "playerTargets" then
 	end
 
---	self:Debug("\n SetOption : "..self:concatLeaves(info))
+	self:Debug("\n SetOption : "..self:concatLeaves(info))
 end
 
 -- VALIDATE--
@@ -132,9 +145,10 @@ function configAddon:GetUnitOption(info)
 
 	profile = profile[info[1]].unit
 	object	= addon.units[info[1]].unit
+	
 	output	= profile[setting]
 
---	self:Debug("\n GetOption : "..self:concatLeaves(info))
+	self:Debug("\n GetUnitOption : "..self:concatLeaves(info))
 	
 	return output
 end
@@ -151,7 +165,52 @@ function configAddon:SetUnitOption(info,value)
 	
 	profile[setting] = value
 
---	self:Debug("\n SetOption : "..self:concatLeaves(info))
+	self:Debug("\n SetUnitOption : "..self:concatLeaves(info))
+end
+
+------------
+-- UNITFONTS   --
+-- GET--
+function configAddon:SetFontType(name,size,outline)
+--	for index,group in pairs(self.addon.units.raid.group)do
+	for index,unit in pairs(oUF.units)do
+		if(unit.groupType =="raid" or unit.groupType =="party" or unit.groupType =="playerTarget" or unit.groupType =="maintank")then
+			addon:UpdateFontObjects(unit,name,size,outline)
+		end
+	end
+	
+end
+function configAddon:GetFontOption(info)
+	local object = info['arg'] 
+	local parent = info[#info-1]
+	local profile = addon.db.profile.frames
+	local setting = info[#info]
+	local object,output
+
+	profile = profile[info[1]].unit.FontObjects[info[4]]
+	object	= addon.units[info[1]].unit
+	
+	output	= profile[setting]
+
+	self:Debug("\n GetFontOption : "..self:concatLeaves(info))
+	
+	return output
+end
+-- SET--
+function configAddon:SetFontOption(info,value)
+	local object = info['arg']
+	local parent = info[#info-1]
+	local profile = addon.db.profile.frames
+	local setting = info[#info]
+	local object,output
+	
+	profile = profile[info[1]].unit.FontObjects[info[4]]
+	
+	profile[setting] = value
+	
+	self:SetFontType(profile.name,profile.size,profile.outline)
+	
+	self:Debug("\n SetFontOption : "..self:concatLeaves(info))
 end
 
 -------------
@@ -166,12 +225,13 @@ function configAddon:GetGroupOption(info)
 	local profile	= addon.db.profile.frames
 	local object	= addon.units
 
-	self:Debug("\n GetOption : "..self:concatLeaves(info))
+	self:Debug("\n GetGroupOption : "..self:concatLeaves(info))
 
 	for i=1,#info-1 do
 		print(info[i].."- [object]type : "..type(object[info[i]]) .. "- [profile]type : "..type(profile[info[i]]))
 
-		GlobalObject = {profile, object}
+		GlobalObject[#GlobalObject] = output
+
 		if(info[i]~=nil)then
 			profile	= profile[info[i]];
 			object	= object[info[i]];
@@ -182,21 +242,7 @@ function configAddon:GetGroupOption(info)
 	
 	return output
 end
--- SET--
-function configAddon:SetGroupOption(info,value)
-	local object = info['arg']
-	local parent = info[#info-1]
-	local profile = addon.db.profile.frames
-	local setting = info[#info]
-	local object,output
-	local groupid =1
-	profile = profile[info[1]].group[groupid]
-	object	= addon.units[info[1]].group[groupid]
-	
-	profile[setting] = value
 
---	self:Debug("\n SetOption : "..self:concatLeaves(info))
-end
 --------------
 -- METHODS --
 function configAddon:ScaleObject(obj,db,value)

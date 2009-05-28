@@ -1,5 +1,5 @@
 oUF.Tags["[raidhp]"] = function(u)
-    o = ""
+  local  o = ""
     if not(u == nil) then
         local c, m, n= UnitHealth(u), UnitHealthMax(u), UnitName(u)
         if UnitIsDead(u) then
@@ -15,7 +15,8 @@ oUF.Tags["[raidhp]"] = function(u)
         elseif(UnitCanAttack("player", u)) then  --enemy, show the health percentage
             o = math.floor(c/m*100+0.5).."%"
         else --otherwise, show the missing health
-            o = "-"..string.numberize(m - c)
+			r,g,b = oUF.ColorGradient((c/m), .9,.1,.1, .8,.8,.1, 1,1,1)
+			o = string.format("|cff%02x%02x%02x -%s |r", r*255, g*255, b*255,string.numberize(m - c))             
         end
     end
     return o
