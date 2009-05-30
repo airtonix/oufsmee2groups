@@ -11,8 +11,8 @@ local addon = _G[layoutName];
 	addon.build.version, addon.build.build, addon.build.date, addon.build.tocversion = GetBuildInfo()
 	addon.PlayerTargetsList = {}
 
-function addon:SaveObjectForDebug(obj)
-	GlobalObject[#GlobalObject+1] = obj
+function addon:SaveObjectForDebug(label,obj)
+	GlobalObject[#GlobalObject+1] = {label,obj}
 end
 
 local numberize = function(val)
@@ -135,9 +135,8 @@ function addon:makeFontObject(frame,name,data)
 			  fontObject:SetJustifyV(data.justifyV)
 			  fontObject:SetPoint(data.anchorFromPoint, parent,data.anchorToPoint, data.anchorX, data.anchorY)
 
-			  local fontDb = data.font -- setting this to the global font option for now, till i work out a per-frame policy.
-			  self:SaveObjectForDebug(data)
-			  fontObject:SetFont(addon.LSM:Fetch(addon.LSM.MediaType.FONT, data.name),data.size,data.outline) 
+			  self:SaveObjectForDebug("makeFontObject("..name..")",data)
+			  fontObject:SetFont(addon.LSM:Fetch(addon.LSM.MediaType.FONT, data.font.name),data.font.size,data.font.outline) 
 
 
 	-- if the parent frame is the unitframe and therefore has an UpdateTag function, use it.			
@@ -157,26 +156,13 @@ function addon:makeFontObject(frame,name,data)
 	return fontObject
 end
 
-function addon:UpdateFontObjects(obj,size,name,outline)
+function addon:UpdateFontObjects(obj)
 	local db = self.db.profile.frames[obj.groupType].unit.FontObjects
 
-	if obj~=nil and obj.FontObjects then	
-		for index,font in pairs(obj.FontObjects)do
-			if(font.object:GetObjectType() == "FontString" and db[index]~=nil)then
-				font.object:SetFont(addon.LSM:Fetch(addon.LSM.MediaType.FONT, db[index].name),db[index].size,db[index].outline) 
-			end
-		end
-
-	else
-
-		if size~= nil then db.frames.font.size = size end
-		if name~= nil then db.frames.font.name = name end
-		if outline~= nil then db.frames.font.outline = outline end
-		
-		for index,frame in pairs(addon.units)do
-			if frame.unit ~= nil then 
-				self:UpdateFontObjects(frame)
-			end
+	for index,font in pairs(obj.FontObjects)do
+		if(font.object:GetObjectType() == "FontString" and db[index]~=nil)then
+			self:SaveObjectForDebug("UpdateFontObjects("..obj.unit..")", db[index])
+			font.object:SetFont(addon.LSM:Fetch(addon.LSM.MediaType.FONT, db[index].font.name),db[index].font.size,db[index].font.outline) 
 		end
 	end
 	
@@ -284,9 +270,9 @@ local func = function(self, unit)
 	---Aggro Indicator
 	self.Banzai = updateBanzai
 	self.BanzaiIndicator = self.Health:CreateTexture(nil, "BORDER")
-	self.BanzaiIndicator:SetPoint("CENTER", self.Health.text, "CENTER", 0, 0)
-	self.BanzaiIndicator:SetHeight(4)
-	self.BanzaiIndicator:SetWidth(self.db.width - 4)
+	self.BanzaiIndicator:SetPoint("CENTER", self.Health, "CENTER", 0, 0)
+	self.BanzaiIndicator:SetHeight(8)
+	self.BanzaiIndicator:SetWidth(self.db.width - 6)
 	self.BanzaiIndicator:SetTexture(1, .25, .25,.8)
 	self.BanzaiIndicator:Hide()
 
@@ -351,8 +337,8 @@ function addon:OnInitialize()
 end
 
 function addon:ToggleDebug()
-	self.enabledDebugMessages=not self.enabledDebugMessages
-	self:Print("Debug messages : "..(self.enabledDebugMessages and "ON" or "OFF"))
+	self.db.profile.enabledDebugMessages=not self.db.profile.enabledDebugMessages
+	self:Print("Debug messages : "..(self.db.profile.enabledDebugMessages and "ON" or "OFF"))
 end
 
 function addon:GetGroupFilterString()

@@ -165,28 +165,35 @@ function config:SetupRaidOptions()
 		})
 	end
 	
-
-	for index,group in pairs(self.addon.units.raid.group)do
-		label = tostring(index);
+	local group
+	for index,label in ipairs(self.addon.groupMap)do
+		group = self.addon.units.raid.group[label]
+		
 		tableExtend(options.raid.args.group.args,{
 			[label] = {
 				type = "group",
 				name = label,
+				order = index,
 				disabled ='CheckGroupOption',
 				get = "GetGroupOption", set = "SetGroupOption",
 				args={
 					["headerGroupName"] = {
 						type		= "header",
-						name	= tostring(index),
+						name	= label,
 						order	= 1,
 					},		
 					["enabled"] = {
 						name	= "Enabled",
 						desc		= "Makes the group visible",
 						type		= 'toggle',
-						order	= 1,
+						order	= 2,
 						arg		= group,
 					},
+					["headerGroupPosition"] = {
+						type		= "header",
+						name	= "Position",
+						order	= 3,
+					},		
 					["anchorX"] = {
 						type		= "range",
 						name	= "Horizontal Position", desc = "Set the horizontal position.",
@@ -199,7 +206,7 @@ function config:SetupRaidOptions()
 						name	= "Vertical Position", desc = "Set the vertical position.",
 						min		= -400, max = 400, step = 1,
 						arg		= group,
-						order	= 5,
+						order	= 6,
 					},
 					["anchorToPoint"] = {
 						type		= "select",
@@ -207,14 +214,14 @@ function config:SetupRaidOptions()
 						desc		= "Which edge to attach To",
 						values	= config.frameAnchorPoints,
 						arg		= group,
-						order	= 6,					
+						order	= 7,					
 					},
 					["anchorFromPoint"] = {
 						type = "select",
 						name = "From edge...", desc = "Which edge to attach from.",
 						values = config.frameAnchorPoints,						
 						arg = group,
-						order = 7,
+						order = 8,
 					},
 					["anchorTo"] = {
 						type = "select",
@@ -222,8 +229,50 @@ function config:SetupRaidOptions()
 						desc = "Which object to anchor to.",
 						values=config.RaidFramesToAnchorTo,
 						arg = group,
-						order=27,					
+						order=9,					
 					},
+					["headerGroupUnits"] = {
+						type		= "header",
+						name	= "Units",
+						order	= 20,
+					},	
+					["columnAnchorPoint"] = {
+						type = "select",
+						name = "Column Anchor Point...",
+						desc = "Which object to anchor to.",
+						values=config.RaidFramesToAnchorTo,
+						arg = group,
+						order=20,					
+					},
+					["columnSpacing"] = {
+						type		= "range",
+						name	= "Column Spacing", desc = "Set spacing between each unit in this group.",
+						min		= -20, max = 20, step = .2,
+						arg		= group,
+						order	= 21,
+					},
+					["unitsPerColumn"] = {
+						type		= "range",
+						name	= "Units per Column", desc = "Number of Units per Column in this group.",
+						min		= 1, max = 40, step = 1,
+						arg		= group,
+						order	= 22,
+					},
+					["maxColumns"] = {
+						type		= "range",
+						name	= "Maximum Columns", desc = "Maximum Number of Columns in this group.",
+						min		= 1, max = 8, step = 1,
+						arg		= group,
+						order	= 23,
+					},
+					["maxColumns"] = {
+						type		= "range",
+						name	= "Maximum Columns", desc = "Maximum Number of Columns in this group.",
+						min		= 1, max = 8, step = 1,
+						arg		= group,
+						order	= 23,
+					},
+					
 				}
 			}
 		})

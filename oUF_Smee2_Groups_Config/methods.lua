@@ -65,25 +65,29 @@ end
 function configAddon:GetOption(info)
 	local object = info['arg'] 
 	local parent = info[#info-1]
-	local profile = addon.db.profile.frames
+	local profile = addon.db.profile
 	local setting = info[#info]
 	local object,output
-
-	if(#info >= 1)then output = profile end
-	if(#info >= 2)then output = output[info[1]] end
-	if(#info >= 3)then output = output[info[2]] end
-	if(#info >= 4)then output = output[info[3]] end
-	if(#info >= 5)then output = output[info[4]] end	
-	if(#info >= 6)then output = output[info[5]] end
-	if(#info >= 7)then output = output[info[6]] end
-	if(#info >= 8)then output = output[info[7]] end
-
-	output = output[setting]
-
-	GlobalObject[#GlobalObject] = output
-
-	self:Debug("\n GetOption : "..self:concatLeaves(info))
 	
+	if(info[1]=="enabledDebugMessages")then 
+		output = self.addon.db.profile.enabledDebugMessages
+		print(output)
+	else
+		profile = profile.frames
+		output	= profile
+
+		for i=1,#info-1 do
+			if(info[i]~=nil)then
+				output = output[info[i]];
+			end
+		end
+
+		output = output[setting]
+
+		GlobalObject[#GlobalObject] = output
+
+		self:Debug("\n GetOption : "..self:concatLeaves(info))
+	end
 	return output
 end
 -- SET--
@@ -94,30 +98,27 @@ function configAddon:SetOption(info,value)
 	local setting = info[#info]
 	local object,output
 
-	if(#info >= 1)then output = profile end
-	if(#info >= 2)then output = output[info[1]] end
-	if(#info >= 3)then output = output[info[2]] end
-	if(#info >= 4)then output = output[info[3]] end
-	if(#info >= 5)then output = output[info[4]] end	
-	if(#info >= 6)then output = output[info[5]] end
-	if(#info >= 7)then output = output[info[6]] end
-	if(#info >= 8)then output = output[info[7]] end
+	if(info[1] == "enabledDebugMessages")then 
+		self:ToggleDebug()
+	else
 
-	if info[1] == "raid" then
-		object	= addon.units.raid
-		profile = profile.raid
-		-- raid stuff blah
-		profile[setting] = value
-		if(setting == "lock") then
-			configAddon:ToggleFrameLock(object,profile,value) 
-		elseif(setting == "scale")then 
-			configAddon:ScaleObject(object,profile,value)
+		if info[1] == "raid" then
+			object	= addon.units.raid
+			profile = profile.raid
+			-- raid stuff blah
+			profile[setting] = value
+			print(setting)
+			if(setting == "lock") then
+				configAddon:ToggleFrameLock(object,profile,value) 
+			elseif(setting == "scale")then 
+				configAddon:ScaleObject(object,profile,value)
+			end
+		elseif info[1] == "party" then
+		elseif info[1] == "maintank" then
+		elseif info[1] == "playerTargets" then
 		end
-	elseif info[1] == "party" then
-	elseif info[1] == "maintank" then
-	elseif info[1] == "playerTargets" then
-	end
 
+	end
 	self:Debug("\n SetOption : "..self:concatLeaves(info))
 end
 
@@ -171,15 +172,17 @@ end
 ------------
 -- UNITFONTS   --
 -- GET--
-function configAddon:SetFontType(name,size,outline)
+function configAddon:SetFontType(unitType,profile)
 --	for index,group in pairs(self.addon.units.raid.group)do
+
 	for index,unit in pairs(oUF.units)do
-		if(unit.groupType =="raid" or unit.groupType =="party" or unit.groupType =="playerTarget" or unit.groupType =="maintank")then
-			addon:UpdateFontObjects(unit,name,size,outline)
+		if(unit.groupType == unitType)then
+			addon:UpdateFontObjects(unit,profile.name,profile.size,profile.outline)
 		end
 	end
 	
 end
+
 function configAddon:GetFontOption(info)
 	local object = info['arg'] 
 	local parent = info[#info-1]
@@ -187,7 +190,7 @@ function configAddon:GetFontOption(info)
 	local setting = info[#info]
 	local object,output
 
-	profile = profile[info[1]].unit.FontObjects[info[4]]
+	profile = profile[info[1]].unit.FontObjects[info[4]].font
 	object	= addon.units[info[1]].unit
 	
 	output	= profile[setting]
@@ -204,11 +207,11 @@ function configAddon:SetFontOption(info,value)
 	local setting = info[#info]
 	local object,output
 	
-	profile = profile[info[1]].unit.FontObjects[info[4]]
-	
+	profile = profile[info[1]].unit.FontObjects[info[4]].font
+
 	profile[setting] = value
 	
-	self:SetFontType(profile.name,profile.size,profile.outline)
+	self:SetFontType(info[1], profile)
 	
 	self:Debug("\n SetFontOption : "..self:concatLeaves(info))
 end
@@ -222,16 +225,12 @@ function configAddon:GetGroupOption(info)
 	local parent	= info[#info-1]
 	local setting	= info[#info]
 
-	local profile	= addon.db.profile.frames
-	local object	= addon.units
-
+	local profile	= addon.db.profile.frames --[info[1]].group[info[3]]
+	local object	= addon.units --.raid.group[info[3]]
+	
 	self:Debug("\n GetGroupOption : "..self:concatLeaves(info))
 
 	for i=1,#info-1 do
-		print(info[i].."- [object]type : "..type(object[info[i]]) .. "- [profile]type : "..type(profile[info[i]]))
-
-		GlobalObject[#GlobalObject] = output
-
 		if(info[i]~=nil)then
 			profile	= profile[info[i]];
 			object	= object[info[i]];
@@ -241,6 +240,29 @@ function configAddon:GetGroupOption(info)
 	output	= profile[setting]
 	
 	return output
+end
+
+-- SET--
+function configAddon:SetGroupOption(info,value)
+	local object	= info['arg'] 
+	local parent	= info[#info-1]
+	local setting	= info[#info]
+
+	local profile	= addon.db.profile.frames
+	local object	= addon.units
+
+	self:Debug("\n SetGroupOption : "..self:concatLeaves(info))
+
+	for i=1,#info-1 do
+		if(info[i]~=nil)then
+			profile	= profile[info[i]];
+--			object	= object[info[i]];
+		end
+	end
+	
+	profile[setting] = value
+	
+	self.addon:updateRaidFrame()
 end
 
 --------------

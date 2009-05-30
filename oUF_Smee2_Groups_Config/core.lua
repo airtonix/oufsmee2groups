@@ -25,8 +25,12 @@ function configAddon:numberize(val)
 	end
 end
 
+function configAddon:ToggleDebug()
+	self.addon.db.profile.enabledDebugMessages = not self.addon.db.profile.enabledDebugMessages
+end
+
 function configAddon:Debug(msg)
-	if addon.db.profile.enabledDebugMessages then
+	if self.addon.db.profile.enabledDebugMessages then
 		self:Print("|cFFFFFF00Debug : |r"..tostring(msg))
 	end
 end
