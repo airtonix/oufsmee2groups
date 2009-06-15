@@ -58,6 +58,19 @@ function configAddon:RaidFramesToAnchorTo()
 	return AnchorToFrames
 end
 
+function configAddon:PartyFramesToAnchorTo()
+	local fname
+	local AnchorToFrames = {}
+	for name,frame in pairs(oUF.objects)do
+		fname = tostring(frame:GetName()):lower()
+		if(fname:gmatch("party")())then
+			AnchorToFrames[fname] = "["..fname.."]"
+		end
+	end
+	return AnchorToFrames
+end
+
+
 -------------
 --  NORMAL --
 

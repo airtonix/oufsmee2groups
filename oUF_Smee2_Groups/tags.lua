@@ -23,4 +23,10 @@ oUF.Tags["[raidhp]"] = function(u)
 end
 oUF.TagEvents["[raidhp]"] = "UNIT_HEALTH UNIT_MAXHEALTH PLAYER_FLAGS_CHANGED"
 
- 
+oUF.Tags['[raidthreat]'] = function(u)
+	if(u==nil) then return end
+	local tanking, _, perc = UnitDetailedThreatSituation(u, u..'target')
+	return not tanking and perc and floor(perc)
+end
+oUF.TagEvents['[raidthreat]'] = 'UNIT_THREAT_LIST_UPDATE  UNIT_THREAT_SITUATION_UPDATE'
+

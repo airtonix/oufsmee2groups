@@ -299,6 +299,7 @@ function addon:GetClassColor(unit)
 	local _,unitClass = UnitClass(unit)
 	return unpack(self.db.profile.colors.class[unitClass or "WARRIOR"])
 end
+
 function addon:OpenConfig(input)
 	local configName = layoutName.."_Config"
 	if(not IsAddOnLoaded(configName)) then LoadAddOn(configName) end
@@ -377,18 +378,18 @@ end
 function addon:updatePartyFrame()
 	if( GetNumPartyMembers() > 0 )then --there is party members to show
 		if(GetNumRaidMembers() > 0)then 
-			if not self.db.profile.frames.party.group.showInRaid then
-				self.units.party:Hide()
+			if not self.db.profile.frames.party.group.players.showInRaid then
+				self.units.party.group.players:Hide()
 			else
-				self.units.party:Show()
+				self.units.party.group.players:Show()
 			end
 		else
 			self:Debug("Showing party frames")
 			for index,frame in pairs(self.units.raid.group)do frame:Hide() end
-			self.units.party:Show()
+			self.units.party.group.players:Show()
 		end
 	else
-		self.units.party:Hide()
+		self.units.party.group.players:Hide()
 	end
 end
 
@@ -428,7 +429,7 @@ function addon:updateRaidFrame(padding,margin)
 	
 	for groupNumber,Population in ipairs(roster) do
 		-- determine the first and last group. for height
-		group = self.units.raid.group[self.groupMap[groupNumber]]
+		group = self.units.raid.group[self.groupMap.raid[groupNumber]]
 		if(group~=nil)then
 			if Population > 0 then
 				numberOfGroupsWithPeople = numberOfGroupsWithPeople + 1
@@ -458,7 +459,7 @@ function addon:updateRaidFrame(padding,margin)
 
 	local height = 0
 	for i=1,lastGroupWithPeople do 
-		height = height + (db.unit.height + db.group[self.groupMap[i]].anchorY)
+		height = height + (db.unit.height + db.group[self.groupMap.raid[i]].anchorY)
 	end
 	height = height + db.group.One.anchorY
 	
@@ -516,14 +517,21 @@ function addon:OnEnable()
 	end	
 	self.enabledDebugMessages = false
 	self.groupMap = {
-		[1]	= "One",
-		[2]	= "Two",
-		[3]	= "Three",
-		[4]	= "Four",
-		[5]	= "Five",
-		[6]	= "Six",
-		[7]	= "Seven",
-		[8]	= "Eight",
+		raid		= {
+			[1]	= "One",
+			[2]	= "Two",
+			[3]	= "Three",
+			[4]	= "Four",
+			[5]	= "Five",
+			[6]	= "Six",
+			[7]	= "Seven",
+			[8]	= "Eight",
+		},
+		party	= {
+			[1]	= "players",
+			[2]	= "pets",
+			[3]	= "targets",
+		}
 	}
 	
     oUF:RegisterStyle("group", func)
@@ -537,8 +545,9 @@ function addon:OnEnable()
 				raidFrame.db = db.frames.raid
 	self.units.raid = raidFrame
 	self.units.raid.group = {}
+
 	local data
-	for index,name in ipairs(self.groupMap) do
+	for index,name in ipairs(self.groupMap.raid) do
 		data = raidSettings.group[name]
 		if(data.visible) then 
 			local group = oUF:Spawn('header', 'oufraid_'..name)
@@ -574,14 +583,16 @@ function addon:OnEnable()
 	raidFrame:SetScale(raidSettings.scale)
 
   	local partySettings = db.frames.party
-    self.units.party = oUF:Spawn("header", "oufparty")
-	self.units.party:SetPoint(
-			partySettings.group.anchorFromPoint,
+  	self.units.party = {}
+    self.units.party.group = {}
+    self.units.party.group.players = oUF:Spawn("header", "oufparty")
+	self.units.party.group.players:SetPoint(
+			partySettings.group.players.anchorFromPoint,
 			UIParent,
-    		partySettings.group.anchorToPoint,
-    		partySettings.group.anchorX,
-    		partySettings.group.anchorY)
-	self.units.party:SetManyAttributes(
+    		partySettings.group.players.anchorToPoint,
+    		partySettings.group.players.anchorX,
+    		partySettings.group.players.anchorY)
+	self.units.party.group.players:SetManyAttributes(
 		"template",		"oUF_Smee2_Groups_Party",
 		"showRaid",			false,
 		"showParty", 		true,
@@ -591,15 +602,56 @@ function addon:OnEnable()
 	    "point",				partySettings.unit.anchorFromPoint,
 	    "initial-height", 	partySettings.unit.height,
 	    "initial-width", 	partySettings.unit.width)
-    self.units.party.groupType = 'party'
-    self.units.party.groupName = 'unit'
+    self.units.party.group.players.groupType = 'party'
+    self.units.party.group.players.groupName = 'unit'
 	self:toggleGroupLayout()
+
 	self:RegisterEvent('ZONE_CHANGED')
 	self:RegisterEvent('PARTY_LEADER_CHANGED')
 	self:RegisterEvent('PARTY_MEMBERS_CHANGED')
 	self:RegisterEvent('RAID_ROSTER_UPDATE')
 	self:RegisterEvent('PLAYER_LOGIN')
-	
+
+	self.units.party.group.pets = {
+		childFrames = function()
+		    local objects = {}
+		    local isParty,isPet,name
+
+		    for index,frame in pairs(oUF.objects)do
+		        name = tostring(frame:GetName()):lower()
+		        isParty = name:gmatch("party")()
+		        isPet = name:gmatch("pet")()
+		        if( isParty and isPet )then 
+		            print(name)
+		            objects[name] = frame 
+		        end
+		    end
+
+		    return objects
+		end,
+		groupType	=	'party',
+		groupName	=	'unit',
+	}
+	self.units.party.group.targets = {
+		childFrames = function()
+			local objects = {}
+			local isParty,isTarget,name
+
+			for index,frame in pairs(oUF.objects)do
+			    name = tostring(frame:GetName()):lower()
+			    isParty = name:gmatch("party")()
+			    isTarget = name:gmatch("target")()
+			    if( isParty and isTarget )then 
+			        print(name)
+			        objects[name] = frame 
+			    end
+			end
+
+			return objects
+		end,
+		groupType	=	'party',
+		groupName	=	'unit',
+	}	
 --[[
 	----------------
 	--	MAINTANKS	--

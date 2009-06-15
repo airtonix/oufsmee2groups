@@ -41,6 +41,7 @@ end
 function configAddon:OnEnable()
 	self:Debug("Enabling")
 	self:SetupRaidOptions()
+	self:SetupPartyOptions()
 --	self:SetupTagOptions(oUF.TagsLogicStrings)
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(configAddonName, self.options,layoutName)
 	-- RegisterOptions("Profiles", LibStub('AceDBOptions-3.0'):GetOptionsTable(addon.db))
