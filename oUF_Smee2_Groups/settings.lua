@@ -80,6 +80,11 @@ oUF_Smee2_Groups_Settings = {
 				},
 			},
 		},
+		healComm = {
+			heallines = true,
+			printAmount = true,
+			renderType = "bar", -- 'bars' or 'text'
+		},	
 		frames = {
 			playerTargets={},
 			raid = {

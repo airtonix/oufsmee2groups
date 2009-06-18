@@ -106,7 +106,9 @@ local updateHealth = function(self, event, unit, bar, min, max)
 	self.Health.bg:SetVertexColor(0.3, 0.3, 0.3)
   else
 	self.Health.bg:SetVertexColor(addon:GetClassColor(unit))
+	if(self.RessurectionIndicator)then self.RessurectionIndicator:Hide() end
   end
+  
 end
 
 function combatFeedbackText(self)
@@ -276,6 +278,14 @@ local func = function(self, unit)
 	self.BanzaiIndicator:SetTexture(1, .25, .25,.8)
 	self.BanzaiIndicator:Hide()
 
+	---Aggro Indicator
+	self.RessurectionIndicator = self.Health:CreateTexture(nil, "BORDER")
+	self.RessurectionIndicator:SetPoint("BOTTOM", self.Health, "BOTTOM", 0, 0)
+	self.RessurectionIndicator:SetHeight(8)
+	self.RessurectionIndicator:SetWidth(self.db.width - 6)
+	self.RessurectionIndicator:SetTexture(0, .25, 1,.8)
+	self.RessurectionIndicator:Hide()
+
 -- DebuffHightlight
 	if IsAddOnLoaded("oUF_DebuffHighlight") then 
 		local dbh =self.Health:CreateTexture(nil, "OVERLAY")
@@ -417,7 +427,44 @@ function addon:updateRaidFrame(padding,margin)
 		db.anchorToPoint,
 		db.anchorX,
 		db.anchorY)
-		
+
+	local left,bottom,width,height
+
+	local extremes = {
+	   left         = nil,
+	   right        = nil,
+	   bottom       = nil,
+	   top          = nil,
+	}
+
+	for unit,frame in pairs(oUF.units)do
+	   
+	   if( unit:gmatch("raid")() == "raid" )then
+		  
+		  left,bottom,height,width = frame.Health:GetRect()
+		  
+		  if(extremes.left==nil or left < extremes.left )then
+			 extremes.left = left
+		  end
+		  if(extremes.bottom==nil or bottom < extremes.bottom )then
+			 extremes.bottom = bottom
+		  end
+		  if(extremes.top==nil or bottom+height > extremes.top )then
+			 extremes.top = bottom+height
+		  end
+		  if(extremes.right==nil or left+width > extremes.right)then
+			 extremes.right = left+width
+		  end
+		  
+	   end
+	   
+	end
+
+	raidFrame:SetWidth( extremes.right - raidFrame:GetLeft() )
+	raidFrame:SetHeight( extremes.top - raidFrame:GetBottom() )
+
+
+--[[		
 	local roster = self:SubGroups()
 	local largestGroup=1
 	local largestNumberOfPartyMembers = 1
@@ -428,8 +475,7 @@ function addon:updateRaidFrame(padding,margin)
 	local group 
 	
 	for groupNumber,Population in ipairs(roster) do
-		-- determine the first and last group. for height
-		group = self.units.raid.group[self.groupMap.raid[groupNumber]]
+		group = self.units.raid.group[ self.groupMap.raid[groupNumber] ]
 		if(group~=nil)then
 			if Population > 0 then
 				numberOfGroupsWithPeople = numberOfGroupsWithPeople + 1
@@ -439,7 +485,6 @@ function addon:updateRaidFrame(padding,margin)
 				lastGroupWithPeople = groupNumber
 				if Population >= largestNumberOfPartyMembers then
 					self:Debug("Found larger group : ".. groupNumber .." :".. Population)
-					--determine the group with the largest amount of players for width
 						largestGroup = groupNumber
 						largestNumberOfPartyMembers = Population
 				end
@@ -459,15 +504,35 @@ function addon:updateRaidFrame(padding,margin)
 
 	local height = 0
 	for i=1,lastGroupWithPeople do 
-		height = height + (db.unit.height + db.group[self.groupMap.raid[i]].anchorY)
+		height = height + (db.unit.height + db.group[ self.groupMap.raid[i] ].anchorY)
 	end
 	height = height + db.group.One.anchorY
 	
 	raidFrame:SetHeight(height)
 	raidFrame:SetWidth((db.unit.width + db.unit.xOffSet) * largestNumberOfPartyMembers + db.unit.xOffSet)
 	raidFrame:Show()
-	
+--]]	
+
 end
+
+function addon:GetUnitFrameByID(unitId)
+	local found
+	for index,frame in pairs(oUF.objects) do 
+		if not found and frame and frame.unit==unitId then found = frame end
+	end
+	return frame
+end
+
+function addon:UNIT_SPELLCAST_SUCCEEDED(event,...)
+	local unitId, spellName, spellRank = ...
+	local frame
+	if addon.RessurectionSpells and addon.RessurectionSpells[spellName] then
+		print(event,unitId, spellName)
+		frame=addon:GetUnitFrameByID(unitId)
+		if frame~=nil then frame.RessurectionIndicator:Show() end
+	end	
+end
+
 
 function addon:PLAYER_REGEN_ENABLED()
 	self:Debug("PLAYER_REGEN_ENABLED")
@@ -532,6 +597,57 @@ function addon:OnEnable()
 			[2]	= "pets",
 			[3]	= "targets",
 		}
+	}
+	self.RessurectionSpells = {
+	--[[
+		["id"] = {
+			2006 = "Resurrection",
+			2010 = "Resurrection",
+			10880 = "Resurrection",
+			10881 = "Resurrection",
+			20770 = "Resurrection",
+			25435 = "Resurrection",
+			48171 = "Resurrection",
+
+			7328 = "Redemption",
+			10322 = "Redemption",
+			10324 = "Redemption",
+			20772 = "Redemption",
+			20773 = "Redemption",
+			48949 = "Redemption",
+			48950 = "Redemption",
+
+			50769 = "Revive",
+			50768 = "Revive",
+			50767 = "Revive",
+			50766 = "Revive",
+			50765 = "Revive",
+			50764 = "Revive",
+			50763 = "Revive",
+
+			20484 = "Rebirth",
+			20739 = "Rebirth",
+			20742 = "Rebirth",
+			20747 = "Rebirth",
+			20748 = "Rebirth",
+			26994 = "Rebirth",
+			48477 = "Rebirth",
+
+			2008 = "Ancestral Spirit", 
+			20609 = "Ancestral Spirit",
+			20610 = "Ancestral Spirit",
+			20776 = "Ancestral Spirit",
+			20777 = "Ancestral Spirit",
+			25590 = "Ancestral Spirit",
+			49277 = "Ancestral Spirit",	
+		},
+	--]]
+		["Ancestral Spirit"] = true, 
+		["Rebirth"] = true,
+		["Revive"] = true,
+		["Redemption"] = true,
+		["Resurrection"] = true,
+		["Mind Vision"] = true,
 	}
 	
     oUF:RegisterStyle("group", func)
@@ -611,7 +727,8 @@ function addon:OnEnable()
 	self:RegisterEvent('PARTY_MEMBERS_CHANGED')
 	self:RegisterEvent('RAID_ROSTER_UPDATE')
 	self:RegisterEvent('PLAYER_LOGIN')
-
+	self:RegisterEvent('UNIT_SPELLCAST_SUCCEEDED')
+	
 	self.units.party.group.pets = {
 		childFrames = function()
 		    local objects = {}
@@ -632,6 +749,7 @@ function addon:OnEnable()
 		groupType	=	'party',
 		groupName	=	'unit',
 	}
+	
 	self.units.party.group.targets = {
 		childFrames = function()
 			local objects = {}
@@ -642,7 +760,6 @@ function addon:OnEnable()
 			    isParty = name:gmatch("party")()
 			    isTarget = name:gmatch("target")()
 			    if( isParty and isTarget )then 
-			        print(name)
 			        objects[name] = frame 
 			    end
 			end
