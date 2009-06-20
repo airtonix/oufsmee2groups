@@ -1,9 +1,12 @@
 ## Interface: 30100
 ## Title: oUF_|cff336633Smee2|r_Groups
+## Notes: raid & party layout for oUF.
 ## Author: z.jiricek
-## Version: 0.11
-## Notes: oUF layout.
+## Version: 0.012
+## X-eMail: airtonix@gmail.com
+
 ## SavedVariables: oUF_Smee2_GroupsDB
+
 ## OptionalDeps: oUF_Banzai, oUF_HealComm, oUF_DebuffHighlight,oUF_SpellRange, oUF_ReadyCheck
 ## RequiredDeps: oUF
 ## DefaultState: enabled

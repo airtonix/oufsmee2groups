@@ -1,11 +1,14 @@
 ## Interface: 30100
-## Title: ouF_|cff336633Smee2|r_Groups_Config
+## Title: oUF_|cff336633Smee2|r_Groups_Config
 ## Notes: raid & party layout for oUF.
 ## Author: z.jiricek
-## Version: 0.11
+## Version: 0.012
 ## X-eMail: airtonix@gmail.com
+
+
+
+## OptionalDeps: SharedMedia,  oUF_Indicators
 ## RequiredDeps: oUF,  oUF_Smee2_Groups
-## OptionalDeps: SharedMedia, oUF_TagEditor, oUF_Indicators
 ## LoadOnDemand: 1
 
 embeds.xml

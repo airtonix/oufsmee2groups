@@ -1,8 +1,10 @@
 ## Interface: 30100
-## Title: oUF_Indicators
+## Title: oUF_|cff336633Smee2|r_Groups_Config
+## Notes: indicators for oUF layouts.
 ## Author: z.jiricek
-## Version: 0.11
-## Notes: oUF Plugin
+## Version: 0.012
+## X-eMail: airtonix@gmail.com
+
 ## RequiredDeps: oUF
 ## DefaultState: enabled
 
