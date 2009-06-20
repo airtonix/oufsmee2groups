@@ -53,6 +53,7 @@ function config:SetupRaidOptions()
 	}
 
 	tableExtend(options.raid.args.unit.args,config:SetupUnitOptions(db.frames.raid))
+	
 	tableExtend(options.raid.args.group.args,
 		config:SetupGroupOptions(
 			db.frames.raid,
@@ -305,7 +306,7 @@ function config:SetupUnitOptions(groupDb)
 		
 		["spacing"] = {
 			type = "range",
-			name = "Width", desc = "Set the width.",
+			name = "Spacing", desc = "Set the spacing between units (does not apply to spacing between groups).",
 			min = 1, max = 32, step = 1,
 			order=44,
 		},

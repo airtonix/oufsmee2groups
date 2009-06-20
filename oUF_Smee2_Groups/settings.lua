@@ -211,8 +211,7 @@ oUF_Smee2_Groups_Settings = {
 					},
 				},
 				unit = {
-					yOffSet = 4,
-					xOffSet = 4,
+					spacing = 4,
 					width = 35,
 					height =25,
 					anchorFromPoint = "LEFT",
@@ -326,8 +325,7 @@ oUF_Smee2_Groups_Settings = {
 						pets			= {},
 					},
 					unit = {
-						yOffSet = 3,
-						xOffSet = 3,
+						spacing = 3,
 						width = 35,
 						height =35,
 						anchorFromPoint = "LEFT",
@@ -609,8 +607,7 @@ oUF_Smee2_Groups_Settings = {
 					anchorY = 145,
 				},
 				unit = {
-					yOffSet = 1,
-					xOffSet = 1,
+					spacing = 3,
 					width = 55,
 					height = 55,
 					anchorFromPoint = "LEFT",

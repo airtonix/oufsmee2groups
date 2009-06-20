@@ -1,0 +1,19 @@
+## Interface: 30100
+## Title: oUF_Smee HealComm
+## Notes: Adds incoming healing bars to oUF frames.
+## Author: z.jiricek
+## Version: 1.1
+## X-Category: UnitFrame
+## X-eMail: zenobius.jiricek@gmail.com
+## Dependencies: oUF
+## DefaultState: enabled
+
+## OptionalDeps: LibHealComm-3.0
+## X-Embeds: LibHealComm-3.0
+
+Libs\LibHealComm-3.0\LibStub\LibStub.lua
+Libs\LibHealComm-3.0\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibHealComm-3.0\LibHealComm-3.0.lua
+
+oUF_SmeeHealComm.lua
+

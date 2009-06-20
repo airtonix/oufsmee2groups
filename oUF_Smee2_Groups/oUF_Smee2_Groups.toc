@@ -1,7 +1,7 @@
 ## Interface: 30100
 ## Title: oUF_|cff336633Smee2|r_Groups
-## Author: Smee
-## Version: 0.1
+## Author: z.jiricek
+## Version: 0.11
 ## Notes: oUF layout.
 ## SavedVariables: oUF_Smee2_GroupsDB
 ## OptionalDeps: oUF_Banzai, oUF_HealComm, oUF_DebuffHighlight,oUF_SpellRange, oUF_ReadyCheck

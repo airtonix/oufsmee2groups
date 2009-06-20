@@ -70,6 +70,26 @@ function configAddon:PartyFramesToAnchorTo()
 	return AnchorToFrames
 end
 
+function configAddon:DimensionFrames(type)
+	local db = addon.db.profile.frames[type].unit
+	
+	for unit,frame in pairs(oUF.units)do
+		if( unit:gmatch(type)()~=nil)then
+			frame:SetWidth(db.width)
+			frame:SetHeight(db.height)
+		end
+	end
+
+	for index,group in pairs(addon.units.raid.group)do
+		group:SetManyAttributes(
+		 "initial-height", w,
+		 "initial-width",  h,
+		 "yOffSet",        db.spacing,
+		 "xOffSet",        db.spacing,
+		 "point",          db.anchorFromPoint)
+	end
+	addon:updateRaidFrame()
+end
 
 -------------
 --  NORMAL --
@@ -84,7 +104,6 @@ function configAddon:GetOption(info)
 	
 	if(info[1]=="enabledDebugMessages")then 
 		output = self.addon.db.profile.enabledDebugMessages
-		print(output)
 	else
 		profile = profile.frames
 		output	= profile
@@ -109,20 +128,27 @@ function configAddon:SetOption(info,value)
 	local parent = info[#info-1]
 	local profile = addon.db.profile.frames
 	local setting = info[#info]
-	local object,output
+	local output
+	local object	= addon.units --.raid.group[info[3]]
 
 	if(info[1] == "enabledDebugMessages")then 
 		self:ToggleDebug()
 	else
 
+		for i=1,#info-1 do
+			if(info[i]~=nil)then
+				profile	= profile[info[i]];
+				object	= object[info[i]];
+			end
+		end
+
+		profile[setting] = value		
+	
 		if info[1] == "raid" then
-			object	= addon.units.raid
-			profile = profile.raid
-			-- raid stuff blah
-			profile[setting] = value
-			print(setting)
 			if(setting == "lock") then
-				configAddon:ToggleFrameLock(object,profile,value) 
+				addon:ToggleFrameLock(object,value) 
+			elseif(setting == "height" or setting == "width" or setting == "spacing")then
+				self:DimensionFrames("raid")
 			elseif(setting == "scale")then 
 				configAddon:ScaleObject(object,profile,value)
 			end
@@ -286,41 +312,4 @@ function configAddon:ScaleObject(obj,db,value)
 	end
 end
 
-function configAddon:ToggleFrameLock(obj,db,value)	
-	if value == false then	
-		print("unlocking")
-		obj:SetBackdropColor(.2,1,.2,.5)
-		obj:EnableMouse(true);
-		obj:SetMovable(true);
-		obj:RegisterForDrag("LeftButton");
-		obj:SetUserPlaced(true)
-		--TODO : Expand borders so it is easier to grab the raidframe
-		obj:SetWidth(obj:GetWidth()+10)
-		--
-		obj:SetScript("OnDragStart", function()
-			if(value == false)then
-				this.isMoving = true;
-				this:StartMoving()
-			end
-		end);
-		obj:SetScript("OnDragStop", function() 
-			if(this.isMoving == true)then
-				this:StopMovingOrSizing()
-			end
-				local from, obj, to,x,y = this:GetPoint();
-				this.db.anchorFromPoint = from;
-				this.db.anchorTo = obj or 'UIParent';
-				this.db.anchorToPoint = to;
-				this.db.anchorX = x;
-				this.db.anchorY = y;
-		end);
-	else
-		print("locking")
-		obj:SetUserPlaced(false)
-		obj:SetMovable(false);
-		obj:RegisterForDrag("");
-		obj:SetBackdropColor(unpack(addon.db.profile.colors.backdropColors))
-		obj:SetWidth(obj:GetWidth()-10)
-	end
 
-end

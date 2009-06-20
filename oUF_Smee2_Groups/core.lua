@@ -3,6 +3,8 @@ local _,playerClass = UnitClass("player")
 local tinsert = table.insert
 local layoutName = "oUF_Smee2_Groups"
 local addon_Settings = oUF_Smee2_Groups_Settings
+local configName = layoutName.."_Config"
+
 _G[layoutName] = LibStub("AceAddon-3.0"):NewAddon(layoutName, "AceConsole-3.0", "AceEvent-3.0")
 local addon = _G[layoutName];
 	GlobalObject = {}
@@ -41,31 +43,108 @@ local LDB = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(layoutName, {
 	type = "launcher",
 	icon = "Interface\\Icons\\Spell_Nature_StormReach",
 })
+
 function LDB.OnClick(self, button)
-	if button == "RightButton" then
-		addon:OpenConfig()
-	else
-		if addon.db.profile.enabled then
-			if IsAltKeyDown() then
-				if IsControlKeyDown() then
-					addon:ToggleDebug()
+	if addon.db.profile.enabled then
+		if button == "RightButton" then
+
+				if IsAltKeyDown() then
+					if IsControlKeyDown() then
+						-- alt + ctrl
+					elseif IsShiftKeyDown() then
+						-- alt + shift
+					else
+						-- only alt
+					end				
+				elseif IsShiftKeyDown()  then
+					if IsControlKeyDown() then
+						-- shift + ctrl
+					else
+						-- only shift
+						addon:ToggleDebug()
+					end				
+				elseif IsControlKeyDown() then
+					--
+				else
 				end
-			elseif IsShiftKeyDown()  then
-				--
-			end
-		else
-			--addon:ToggleActive(true)
+
+		elseif button == "LeftButton" then
+
+				if IsAltKeyDown() then
+					if IsControlKeyDown() then
+						-- alt + ctrl
+					elseif IsShiftKeyDown() then
+						-- alt + shift
+					else
+						-- only alt
+					end				
+				elseif IsShiftKeyDown()  then
+					if IsControlKeyDown() then
+						-- shift + ctrl
+					else
+						-- only shift
+						addon:ToggleFrameLock(nil,not addon.db.profile.frames.raid..locked)
+					end				
+				elseif IsControlKeyDown() then
+					--
+				else
+					addon:OpenConfig()
+				end
+
 		end
+	else
+		--addon:ToggleActive(true)
 	end
 end
 
 function LDB.OnTooltipShow(tt)
 	tt:AddLine(layoutName)
-	tt:AddLine("Debugging "..(addon.enabledDebugMessages and "en" or "dis").."abled.")
+	tt:AddLine("Debugging "..(addon.db.profile.enabledDebugMessages and "en" or "dis").."abled.")
 	tt:AddLine("--")
-	tt:AddLine("Ctrl + Alt + Left Click : Toggle Debug Messages")
+	tt:AddLine("Left Click : Open Config")
+	tt:AddLine("Shift + Left Click : Unlock Raid Frames")
+--	tt:AddLine("Shift + Right Click : Unlock Party Frames")
+	tt:AddLine("Right Click : Toggle Debug Messages")
 end
 
+function addon:ToggleFrameLock(obj,value)	
+	if value == false then	
+		print("unlocking")
+		obj:SetBackdropColor(.2,1,.2,.5)
+		obj:EnableMouse(true);
+		obj:SetMovable(true);
+		obj:RegisterForDrag("LeftButton");
+		obj:SetUserPlaced(true)
+		--TODO : Expand borders so it is easier to grab the raidframe
+		obj:SetWidth(obj:GetWidth()+10)
+		--
+		obj:SetScript("OnDragStart", function()
+			if(value == false)then
+				this.isMoving = true;
+				this:StartMoving()
+			end
+		end);
+		obj:SetScript("OnDragStop", function() 
+			if(this.isMoving == true)then
+				this:StopMovingOrSizing()
+			end
+				local from, obj, to,x,y = this:GetPoint();
+				this.db.anchorFromPoint = from;
+				this.db.anchorTo = obj or 'UIParent';
+				this.db.anchorToPoint = to;
+				this.db.anchorX = x;
+				this.db.anchorY = y;
+		end);
+	else
+		print("locking")
+		obj:SetUserPlaced(false)
+		obj:SetMovable(false);
+		obj:RegisterForDrag("");
+		obj:SetBackdropColor(unpack(addon.db.profile.colors.backdropColors))
+		obj:SetWidth(obj:GetWidth()-10)
+	end
+
+end
 
 local function Hex(r, g, b)
 	if type(r) == "table" then
@@ -310,14 +389,20 @@ function addon:GetClassColor(unit)
 	return unpack(self.db.profile.colors.class[unitClass or "WARRIOR"])
 end
 
-function addon:OpenConfig(input)
-	local configName = layoutName.."_Config"
-	if(not IsAddOnLoaded(configName)) then LoadAddOn(configName) end
-	InterfaceOptionsFrame:Hide()
-	LibStub("AceConfigDialog-3.0"):SetDefaultSize(configName, 500, 550)
-	LibStub("AceConfigDialog-3.0"):Open(configName)
-end
+function addon:OpenConfig()
+	local aceCfg = LibStub("AceConfigDialog-3.0")
+	if(not IsAddOnLoaded(configName)) then
+		LoadAddOn(configName)
+	end
 
+	if(aceCfg.OpenFrames[configName])then
+		aceCfg:Close(configName)
+	else
+		InterfaceOptionsFrame:Hide()
+		aceCfg:SetDefaultSize(configName, 700, 650)
+		aceCfg:Open(configName)
+	end
+end
 
 function addon:ImportSharedMedia()
 	if(self.LSM) then self.SharedMediaActive = true else return end
@@ -428,43 +513,6 @@ function addon:updateRaidFrame(padding,margin)
 		db.anchorX,
 		db.anchorY)
 
-	local left,bottom,width,height
-
-	local extremes = {
-	   left         = nil,
-	   right        = nil,
-	   bottom       = nil,
-	   top          = nil,
-	}
-
-	for unit,frame in pairs(oUF.units)do
-	   
-	   if( unit:gmatch("raid")() == "raid" )then
-		  
-		  left,bottom,height,width = frame.Health:GetRect()
-		  
-		  if(extremes.left==nil or left < extremes.left )then
-			 extremes.left = left
-		  end
-		  if(extremes.bottom==nil or bottom < extremes.bottom )then
-			 extremes.bottom = bottom
-		  end
-		  if(extremes.top==nil or bottom+height > extremes.top )then
-			 extremes.top = bottom+height
-		  end
-		  if(extremes.right==nil or left+width > extremes.right)then
-			 extremes.right = left+width
-		  end
-		  
-	   end
-	   
-	end
-
-	raidFrame:SetWidth( extremes.right - raidFrame:GetLeft() )
-	raidFrame:SetHeight( extremes.top - raidFrame:GetBottom() )
-
-
---[[		
 	local roster = self:SubGroups()
 	local largestGroup=1
 	local largestNumberOfPartyMembers = 1
@@ -509,9 +557,9 @@ function addon:updateRaidFrame(padding,margin)
 	height = height + db.group.One.anchorY
 	
 	raidFrame:SetHeight(height)
-	raidFrame:SetWidth((db.unit.width + db.unit.xOffSet) * largestNumberOfPartyMembers + db.unit.xOffSet)
+	raidFrame:SetWidth((db.unit.width + db.unit.spacing) * largestNumberOfPartyMembers)
+
 	raidFrame:Show()
---]]	
 
 end
 
@@ -671,8 +719,8 @@ function addon:OnEnable()
 			"template",				"oUF_Smee2_Groups_Raid",			"groupFilter",				data.groupFilter,
 			"showRaid",					true,
 			"showPlayer", 			true,
-			"yOffSet",					raidSettings.unit.yOffSet,
-			"xOffSet", 					raidSettings.unit.xOffSet,
+			"yOffSet",					raidSettings.unit.spacing,
+			"xOffSet", 					raidSettings.unit.spacing,
 			"point", 						raidSettings.unit.anchorFromPoint,
 			"initial-height",  		raidSettings.unit.height,
 			"initial-width", 			raidSettings.unit.width,
@@ -713,8 +761,8 @@ function addon:OnEnable()
 		"showRaid",			false,
 		"showParty", 		true,
 		"showPlayer", 	true,
-		"yOffSet",			partySettings.unit.yOffSet,
-		"xOffSet", 			partySettings.unit.xOffSet,		
+		"yOffSet",			partySettings.unit.spacing,
+		"xOffSet", 			partySettings.unit.spacing,		
 	    "point",				partySettings.unit.anchorFromPoint,
 	    "initial-height", 	partySettings.unit.height,
 	    "initial-width", 	partySettings.unit.width)
@@ -722,12 +770,12 @@ function addon:OnEnable()
     self.units.party.group.players.groupName = 'unit'
 	self:toggleGroupLayout()
 
-	self:RegisterEvent('ZONE_CHANGED')
+	--self:RegisterEvent('ZONE_CHANGED')
 	self:RegisterEvent('PARTY_LEADER_CHANGED')
 	self:RegisterEvent('PARTY_MEMBERS_CHANGED')
 	self:RegisterEvent('RAID_ROSTER_UPDATE')
-	self:RegisterEvent('PLAYER_LOGIN')
-	self:RegisterEvent('UNIT_SPELLCAST_SUCCEEDED')
+	--self:RegisterEvent('PLAYER_LOGIN')
+	--self:RegisterEvent('UNIT_SPELLCAST_SUCCEEDED')
 	
 	self.units.party.group.pets = {
 		childFrames = function()
