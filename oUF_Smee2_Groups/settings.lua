@@ -55,9 +55,6 @@ oUF_Smee2_Groups_Settings = {
 				groupsBorder = "Interface\\Addons\\oUF_Smee2_Groups\\media\\borders\\border",
 			},
 		},
-		fonts = { 
-			default ="Interface\\Addons\\oUF_Smee2_Groups\\media\\fonts\\visitor.ttf"
-		},
 		auras = {
 			playerScale = 1.4,
 			otherScale = 1,
@@ -85,6 +82,59 @@ oUF_Smee2_Groups_Settings = {
 			printAmount = true,
 			renderType = "bar", -- 'bars' or 'text'
 		},	
+		ressurectionIdicator = {
+			spells = {
+				id = {
+					["2006"]= "Resurrection",
+					["2010"] ="Resurrection",
+					["10880"] ="Resurrection",
+					["10881"] ="Resurrection",
+					["20770"] ="Resurrection",
+					["25435"] ="Resurrection",
+					["48171"] ="Resurrection",
+
+					["7328"] ="Redemption",
+					["10322"] ="Redemption",
+					["10324"] ="Redemption",
+					["20772"] ="Redemption",
+					["20773"] ="Redemption",
+					["48949"] ="Redemption",
+					["48950"] ="Redemption",
+
+					["50769"] ="Revive",
+					["50768"] ="Revive",
+					["50767"] ="Revive",
+					["50766"] ="Revive",
+					["50765"] ="Revive",
+					["50764"] ="Revive",
+					["50763"] ="Revive",
+
+					["20484"] ="Rebirth",
+					["20739"] ="Rebirth",
+					["20742"] ="Rebirth",
+					["20747"] ="Rebirth",
+					["20748"] ="Rebirth",
+					["26994"] ="Rebirth",
+					["48477"] ="Rebirth",
+
+					["2008"] ="Ancestral Spirit", 
+					["20609"] ="Ancestral Spirit",
+					["20610"] ="Ancestral Spirit",
+					["20776"] ="Ancestral Spirit",
+					["20777"] ="Ancestral Spirit",
+					["25590"] ="Ancestral Spirit",
+					["49277"] ="Ancestral Spirit",	
+				},
+				name = {
+					["Ancestral Spirit"] = true, 
+					["Rebirth"] = true,
+					["Revive"] = true,
+					["Redemption"] = true,
+					["Resurrection"] = true,
+					["Mind Vision"] = true,
+				},
+			}
+		},
 		frames = {
 			playerTargets={},
 			raid = {

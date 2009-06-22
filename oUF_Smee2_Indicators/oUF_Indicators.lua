@@ -115,7 +115,7 @@ oUF.indicators={
 			["BOTTOMRIGHT"] = "[rejuv][regrow]"
 		},
 		PRIEST = {
-			["TOP"] = "[painsupress][powerinfusion][guardspirit][twilighttorment]",
+			["TOP"] = "[painsupress][powerinfusion][guardspirit][twilighttorment][spellreflect]",
 			["TOPLEFT"] = "[pws][ws][aegis]",
 			["TOPRIGHT"] = "[spirit][shad][fort][fear][tree]",
 			["BOTTOMLEFT"] = "[inspiration][grace][pom]",

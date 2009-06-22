@@ -79,6 +79,10 @@ end
 oUF.TagEvents["[targethp]"] = "UNIT_HEALTH UNIT_MAXHEALTH"
   
  
+oUF.Tags["[spellreflect]"] = function(u) if not NeedsIndicators(u)then return end; local c = select(4, UnitAura(u, "Spell Reflection")); return c and "|cffFF00FF*|r" or "" end
+oUF.TagEvents["[spellreflect]"] = "UNIT_AURA"
+
+
 oUF.Tags["[twilighttorment]"] = function(u) if not NeedsIndicators(u)then return end; local c = select(4, UnitAura(u, "Twilight Torment")); return c and "|cffFF00FFTT|r" or "" end
 oUF.TagEvents["[twilighttorment]"] = "UNIT_AURA"
 oUF.Tags["[hymnofhope]"] = function(u) if not NeedsIndicators(u)then return end; local c = UnitAura(u, "Hymn of Hope"); return c and "|cff6AB8EC'|r" or "" end

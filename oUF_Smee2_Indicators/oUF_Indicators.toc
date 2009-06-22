@@ -1,12 +1,13 @@
 ## Interface: 30100
-## Title: oUF_|cff336633Smee2|r_Groups_Config
+## Title: oUF_|cff336633Smee2|r_Indicators
 ## Notes: indicators for oUF layouts.
 ## Author: z.jiricek
-## Version: 0.012
-## X-eMail: airtonix@gmail.com
+## Version: 0.013
+## X-eMail: zenobius.jiricek@gmail.com
 
 ## RequiredDeps: oUF
 ## DefaultState: enabled
 
 tags.lua
-oUF_Indicators.lua
+oUF_Smee2_Indicators.lua
+

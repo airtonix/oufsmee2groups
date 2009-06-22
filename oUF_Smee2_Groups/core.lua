@@ -61,11 +61,11 @@ function LDB.OnClick(self, button)
 						-- shift + ctrl
 					else
 						-- only shift
-						addon:ToggleDebug()
 					end				
 				elseif IsControlKeyDown() then
 					--
 				else
+						addon:ToggleDebug()
 				end
 
 		elseif button == "LeftButton" then
@@ -406,16 +406,26 @@ end
 
 function addon:ImportSharedMedia()
 	if(self.LSM) then self.SharedMediaActive = true else return end
-	for name,path in pairs(self.db.profile.textures.statusbars)do
-		self.LSM:Register(self.LSM.MediaType.STATUSBAR, name, path)
+	local db = self.db.profile
+
+	if(db.textures)then
+		if(db.textures.borders)then
+			for name,path in pairs(self.db.profile.textures.statusbars)do
+				self.LSM:Register(self.LSM.MediaType.STATUSBAR, name, path)
+			end
+		end
+	
+		if(db.textures.borders)then
+			for name,path in pairs(self.db.profile.textures.borders)do
+				self.LSM:Register(self.LSM.MediaType.BORDER, name, path)
+			end
+		end
 	end
 	
-	for name,path in pairs(self.db.profile.textures.borders)do
-		self.LSM:Register(self.LSM.MediaType.BORDER, name, path)
-	end
-	
-	for name,data in pairs(self.db.profile.fonts)do
-		self.LSM:Register(self.LSM.MediaType.FONT, name, data.name)
+	if(db.fonts)then
+		for name,data in pairs(db.fonts)do
+			self.LSM:Register(self.LSM.MediaType.FONT, name, data.name)
+		end
 	end
 end
 
@@ -447,14 +457,17 @@ function addon:GetGroupFilterString()
 	return output
 end
 
-function addon:SubGroups()
-	local t = {}
-	for i = 1, 8 do t[i] = 0 end
-	for i = 1, GetNumRaidMembers() do
-			local s = select(3, GetRaidRosterInfo(i))
-			t[s] = t[s] + 1
+function addon:Roster()
+	local roster = {}
+	local raid_groups = self.units.raid.group
+	local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML
+	for group = 1, 8 do roster[group] = {} end
+	for raidIndex = 1, GetNumRaidMembers() do
+		name, rank, groupId, level, class, fileName, zone, online, isDead, role, isML = GetRaidRosterInfo(raidIndex);
+		table.insert(roster[groupId],oUF.units["raid"..raidIndex])
+		--raid_groups[groupId]
 	end
-	return t
+	return roster
 end
 
 function addon:toggleGroupLayout()
@@ -465,7 +478,7 @@ function addon:toggleGroupLayout()
 	else
 		local groups = self.units.raid.group
 		self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-		self:updateRaidFrame()
+		self:OriginalUpdateRaidFrame()
 		self:updatePartyFrame()
 	end
 end
@@ -488,7 +501,99 @@ function addon:updatePartyFrame()
 	end
 end
 
+function addon:CollapseGroups(roster)
+	local isEmpty,tempPoints,frame,msg,data
+	local raidGroup = self.units.raid.group
+	local raidGroupDb = self.db.profile.frames.raid.group
+	for index,name in ipairs(self.groupMap.raid) do
+		frame = raidGroup[name]
+		data = tempPoints and tempPoints or raidGroupDb[name]
+		
+		frame:SetPoint(data.anchorFromPoint,
+				self.units.raid.group[data.anchorTo] or self.units.raid,
+				data.anchorToPoint, data.anchorX, data.anchorY)
+
+		if( #roster[index] == 0 )then
+			--empty
+			tempPoints = data						
+		else
+			--not empty
+			tempPoints = nil
+		end
+		
+	end
+	self:Debug("Groups Collapsed")
+	
+end
+
 function addon:updateRaidFrame(padding,margin)
+	local padding = padding or 5
+	local margin = margin or 10
+	local db = self.db.profile.frames.raid
+	local raidFrame = self.units.raid
+	local roster = self:Roster()
+	self:CollapseGroups(roster)
+
+	if(GetNumRaidMembers() > 0) then
+		self:Debug("Showing raid frames")		
+		for index,group in pairs(self.units.raid.group)	do
+			group:Show()
+		end
+		raidFrame:Show()
+	else
+		self:Debug("Hiding raid frames")
+		for index,group in pairs(self.units.raid.group)	do
+			group:Hide()
+		end
+		raidFrame:Hide()
+		return
+	end
+	
+	raidFrame:SetPoint(
+		db.anchorFromPoint,
+		UIParent,
+		db.anchorToPoint,
+		db.anchorX,
+		db.anchorY)
+
+	local left,bottom,width,height = 0,0,0,0
+	local frameLeft,frameRight,frameTop,frameBottom
+	  width = db.unit.width
+	  height = db.unit.height
+	  spacing = db.unit.spacing
+
+	for unit,frame in pairs(oUF.units)do
+	   if( unit:gmatch("raid")() == "raid" and UnitName(unit)~=nil )then  
+		  left,  bottom = frame:GetRect()
+		  left = left or 0
+		  bottom = bottom or 0
+
+		  if(frameLeft==nil or left < frameLeft)then
+		     frameLeft = math.floor(left)
+		  end
+		  if(frameBottom==nil or bottom < frameBottom )then
+		     frameBottom = math.floor(bottom)
+		  end
+		  
+		  if(frameTop==nil or bottom+height > frameTop )then
+		     frameTop = math.floor(bottom+height+spacing)
+		  end
+		  
+		  if(frameRight==nil or left+width > frameRight)then
+		     frameRight = math.floor(left+width+spacing)
+		  end
+		  self:Debug(table.concat({unit, frameLeft,frameBottom,frameRight - frameLeft, frameTop - frameBottom},", "))
+	   end       
+	end
+
+	raidFrame:SetWidth( frameRight - frameLeft + padding )
+	raidFrame:SetHeight( frameTop - frameBottom + padding )
+
+	raidFrame:Show()
+
+end
+
+function addon:OriginalUpdateRaidFrame(padding,margin)
 	local padding = padding or 5
 	local margin = margin or 10
 	
@@ -512,38 +617,56 @@ function addon:updateRaidFrame(padding,margin)
 		db.anchorToPoint,
 		db.anchorX,
 		db.anchorY)
-
-	local roster = self:SubGroups()
+		
+	local roster = self:Roster()
 	local largestGroup=1
 	local largestNumberOfPartyMembers = 1
 	local lastGroupWithPeople = false 
 	local firstGroupWithPeople = false
 	local bottomPoint, topPoint = {},{}
 	local numberOfGroupsWithPeople = 0
-	local group 
+	local group,tempPoint,data
+	local emptyGroups = 0
+	local groupName
 	
 	for groupNumber,Population in ipairs(roster) do
-		group = self.units.raid.group[ self.groupMap.raid[groupNumber] ]
+		-- determine the first and last group. for height
+		groupName = self.groupMap.raid[groupNumber]
+		group = self.units.raid.group[groupName]
+		data = db.group[groupName]
+		group:SetPoint(data.anchorFromPoint,
+				self.units.raid.group[data.anchorTo] or self.units.raid,
+				data.anchorToPoint, data.anchorX, data.anchorY)
+				
 		if(group~=nil)then
-			if Population > 0 then
-				numberOfGroupsWithPeople = numberOfGroupsWithPeople + 1
+			if #Population > 0 then
+				numberOfGroupsWithPeople = (numberOfGroupsWithPeople + 1)
 				if not firstGroupWithPeople then
 					firstGroupWithPeople = groupNumber
 				end
 				lastGroupWithPeople = groupNumber
-				if Population >= largestNumberOfPartyMembers then
-					self:Debug("Found larger group : ".. groupNumber .." :".. Population)
+				if #Population >= largestNumberOfPartyMembers then
+					self:Debug("Found larger group : ".. groupNumber .." :".. #Population)
+					--determine the group with the largest amount of players for width
 						largestGroup = groupNumber
-						largestNumberOfPartyMembers = Population
+						largestNumberOfPartyMembers = #Population
 				end
-			end			
+				if(tempPoint~=nil)then
+					group:SetPoint(unpack(tempPoint))
+					tempPoint = nil
+				end
+			else
+				emptyGroups = emptyGroups + 1
+				tempPoint = tempPoint and tempPoint or {group:GetPoint()}				
+			end	
 		end			
 	end
-	
+
 	self:Debug("group with greatest population : "..largestGroup)
 	self:Debug("first group with people : "..firstGroupWithPeople)
 	self:Debug("last group with people : "..lastGroupWithPeople)
 	self:Debug("number of groups with people : "..numberOfGroupsWithPeople)
+	self:Debug("number of empty groups : "..emptyGroups)
 	
 	local top = db.unit.height * lastGroupWithPeople
 	local bottom = 0
@@ -551,16 +674,15 @@ function addon:updateRaidFrame(padding,margin)
 	local right = 0
 
 	local height = 0
-	for i=1,lastGroupWithPeople do 
-		height = height + (db.unit.height + db.group[ self.groupMap.raid[i] ].anchorY)
+	for i=1,numberOfGroupsWithPeople do 
+		height = height + (db.unit.height + db.group[self.groupMap.raid[i]].anchorY)
 	end
 	height = height + db.group.One.anchorY
 	
 	raidFrame:SetHeight(height)
-	raidFrame:SetWidth((db.unit.width + db.unit.spacing) * largestNumberOfPartyMembers)
-
+	raidFrame:SetWidth((db.unit.width + db.unit.spacing) * largestNumberOfPartyMembers + db.unit.spacing)
 	raidFrame:Show()
-
+	
 end
 
 function addon:GetUnitFrameByID(unitId)
@@ -573,10 +695,11 @@ end
 
 function addon:UNIT_SPELLCAST_SUCCEEDED(event,...)
 	local unitId, spellName, spellRank = ...
+	local ressurection = self.db.profile.ressurectionIdicator
 	local frame
-	if addon.RessurectionSpells and addon.RessurectionSpells[spellName] then
-		print(event,unitId, spellName)
-		frame=addon:GetUnitFrameByID(unitId)
+	if ressurection[spellName]~=nil then
+		self:Debug(event,unitId, spellName)
+		frame = addon:GetUnitFrameByID(unitId)
 		if frame~=nil then frame.RessurectionIndicator:Show() end
 	end	
 end
@@ -586,39 +709,18 @@ function addon:PLAYER_REGEN_ENABLED()
 	self:Debug("PLAYER_REGEN_ENABLED")
 	self:toggleGroupLayout()
 end
-function addon:ZONE_CHANGED()
-	self:Debug("ZONE_CHANGED")
-	self:toggleGroupLayout()
-end
-function addon:PLAYER_LOGIN()
-	self:Debug("PLAYER_LOGIN")
-	self:toggleGroupLayout()
-end
-function addon:RAID_ROSTER_UPDATE()
-	self:Debug("RAID_ROSTER_UPDATE")
-	self:toggleGroupLayout()
-end
 
 function addon:RAID_ROSTER_UPDATE()
 	self:Debug("RAID_ROSTER_UPDATE")
-	self:toggleGroupLayout()
-end
-
-function  addon:PARTY_MEMBERS_CHANGED()
-	self:Debug("PARTY_MEMBERS_CHANGED")
-	self:toggleGroupLayout()
-end
-
-function  addon:PARTY_LEADER_CHANGED()
-	self:Debug("PARTY_LEADER_CHANGED")
 	self:toggleGroupLayout()
 end
 
 function addon:Debug(msg)
-	if self.enabledDebugMessages then
+	if self.db.profile.enabledDebugMessages then
 		self:Print("|cFFFFFF00Debug : |r"..msg)
 	end
 end
+
 function addon:OnEnable()
     -- Called when the addon is enabled
     self.units = {}
@@ -645,57 +747,6 @@ function addon:OnEnable()
 			[2]	= "pets",
 			[3]	= "targets",
 		}
-	}
-	self.RessurectionSpells = {
-	--[[
-		["id"] = {
-			2006 = "Resurrection",
-			2010 = "Resurrection",
-			10880 = "Resurrection",
-			10881 = "Resurrection",
-			20770 = "Resurrection",
-			25435 = "Resurrection",
-			48171 = "Resurrection",
-
-			7328 = "Redemption",
-			10322 = "Redemption",
-			10324 = "Redemption",
-			20772 = "Redemption",
-			20773 = "Redemption",
-			48949 = "Redemption",
-			48950 = "Redemption",
-
-			50769 = "Revive",
-			50768 = "Revive",
-			50767 = "Revive",
-			50766 = "Revive",
-			50765 = "Revive",
-			50764 = "Revive",
-			50763 = "Revive",
-
-			20484 = "Rebirth",
-			20739 = "Rebirth",
-			20742 = "Rebirth",
-			20747 = "Rebirth",
-			20748 = "Rebirth",
-			26994 = "Rebirth",
-			48477 = "Rebirth",
-
-			2008 = "Ancestral Spirit", 
-			20609 = "Ancestral Spirit",
-			20610 = "Ancestral Spirit",
-			20776 = "Ancestral Spirit",
-			20777 = "Ancestral Spirit",
-			25590 = "Ancestral Spirit",
-			49277 = "Ancestral Spirit",	
-		},
-	--]]
-		["Ancestral Spirit"] = true, 
-		["Rebirth"] = true,
-		["Revive"] = true,
-		["Redemption"] = true,
-		["Resurrection"] = true,
-		["Mind Vision"] = true,
 	}
 	
     oUF:RegisterStyle("group", func)
@@ -727,12 +778,10 @@ function addon:OnEnable()
 			"showPlayer", 			true)
 			group.groupType = 'raid'
 			group.groupName = name
-			self:Debug(index..":"..name)
 			self.units.raid.group[name] = group
 			group:SetPoint(data.anchorFromPoint,
 					self.units.raid.group[data.anchorTo] or self.units.raid,
 					data.anchorToPoint, data.anchorX, data.anchorY)
-					
 			group:SetFrameLevel(0)
 			group:SetParent(raidFrame)
 		end
@@ -771,8 +820,8 @@ function addon:OnEnable()
 	self:toggleGroupLayout()
 
 	--self:RegisterEvent('ZONE_CHANGED')
-	self:RegisterEvent('PARTY_LEADER_CHANGED')
-	self:RegisterEvent('PARTY_MEMBERS_CHANGED')
+	--self:RegisterEvent('PARTY_LEADER_CHANGED')
+	--self:RegisterEvent('PARTY_MEMBERS_CHANGED')
 	self:RegisterEvent('RAID_ROSTER_UPDATE')
 	--self:RegisterEvent('PLAYER_LOGIN')
 	--self:RegisterEvent('UNIT_SPELLCAST_SUCCEEDED')
@@ -787,7 +836,7 @@ function addon:OnEnable()
 		        isParty = name:gmatch("party")()
 		        isPet = name:gmatch("pet")()
 		        if( isParty and isPet )then 
-		            print(name)
+		            self:Debug(name)
 		            objects[name] = frame 
 		        end
 		    end
