@@ -4,7 +4,7 @@ local configAddonName = layoutName..'_Config'
 _G[configAddonName] = LibStub("AceAddon-3.0"):NewAddon(configAddonName, "AceConsole-3.0")
 local configAddon = _G[configAddonName]
 configAddon.addon = addon
-
+local oUF = Smee2Groups_oUFEmbed
 
 
 --======================--

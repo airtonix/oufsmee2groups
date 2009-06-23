@@ -1,9 +1,16 @@
+local parent = debugstack():match[[\AddOns\(.-)\]]
+local global = GetAddOnMetadata(parent, 'X-oUF')
+assert(global, 'X-oUF needs to be defined in the parent add-on.')
+local oUF = _G[global]
+
+
 local _G = getfenv(0)
 local _,playerClass = UnitClass("player")
 local tinsert = table.insert
 local layoutName = "oUF_Smee2_Groups"
 local addon_Settings = oUF_Smee2_Groups_Settings
 local configName = layoutName.."_Config"
+
 
 _G[layoutName] = LibStub("AceAddon-3.0"):NewAddon(layoutName, "AceConsole-3.0", "AceEvent-3.0")
 local addon = _G[layoutName];
@@ -249,6 +256,40 @@ function addon:UpdateFontObjects(obj)
 	
 end
 
+
+local oUF = Smee2Groups_oUFEmbed
+oUF.Tags["[raidhp]"] = function(u)
+  local  o = ""
+    if not(u == nil) then
+        local c, m, n= UnitHealth(u), UnitHealthMax(u), UnitName(u)
+        if UnitIsDead(u) then
+            o = "DEAD"
+        elseif not UnitIsConnected(u) then
+            o = "D/C"
+        elseif UnitIsAFK(u) then
+            o = "AFK"
+        elseif UnitIsGhost(u) then
+            o = "GHOST"
+        elseif(c >= m) then --full health , show the name
+            o = n:utf8sub(1,4)
+        elseif(UnitCanAttack("player", u)) then  --enemy, show the health percentage
+            o = math.floor(c/m*100+0.5).."%"
+        else --otherwise, show the missing health
+			r,g,b = oUF.ColorGradient((c/m), .9,.1,.1, .8,.8,.1, 1,1,1)
+			o = string.format("|cff%02x%02x%02x -%s |r", r*255, g*255, b*255,string.numberize(m - c))             
+        end
+    end
+    return o
+end
+oUF.TagEvents["[raidhp]"] = "UNIT_HEALTH UNIT_MAXHEALTH PLAYER_FLAGS_CHANGED"
+
+oUF.Tags['[raidthreat]'] = function(u)
+	if(u==nil) then return end
+	local tanking, _, perc = UnitDetailedThreatSituation(u, u..'target')
+	return not tanking and perc and floor(perc)
+end
+oUF.TagEvents['[raidthreat]'] = 'UNIT_THREAT_LIST_UPDATE  UNIT_THREAT_SITUATION_UPDATE'
+
 -- Style
 local func = function(self, unit)
 	self.menu = menu
@@ -318,23 +359,39 @@ local func = function(self, unit)
 --==========--
 --	ICONS	--
 --==========--
+--Master Loot Icon
+	local iconAnchor = self.FontObjects.health.object
+	self.MasterLooter = self.Health:CreateTexture(nil, "OVERLAY")
+	self.MasterLooter:SetPoint("BOTTOMLEFT", iconAnchor,"TOPLEFT", 0, 0)
+	self.MasterLooter:SetHeight(8)
+	self.MasterLooter:SetWidth(8)
+
 --Leader Icon
 	self.Leader = self.Health:CreateTexture(nil, "OVERLAY")
-	self.Leader:SetPoint("TOPLEFT", self, 0, 0)
-	self.Leader:SetHeight(10)
-	self.Leader:SetWidth(10)
-
---Master Loot Icon
-	self.MasterLooter = self.Health:CreateTexture(nil, "OVERLAY")
-	self.MasterLooter:SetPoint("TOPLEFT", self, 8, 0)
-	self.MasterLooter:SetHeight(10)
-	self.MasterLooter:SetWidth(10)
-
+	self.Leader:SetPoint("BOTTOMLEFT", iconAnchor,"TOPLEFT", 8, 0)
+	self.Leader:SetHeight(8)
+	self.Leader:SetWidth(8)
+--Raid Assist
+    self.Assistant = self.Health:CreateTexture(nil, "OVERLAY")
+    self.Assistant:SetPoint("BOTTOMLEFT", iconAnchor,"TOPLEFT", 8, 0)
+    self.Assistant:SetHeight(8)
+    self.Assistant:SetWidth(8)
+	
+    self.MainTank = self.Health:CreateTexture(nil, "OVERLAY")
+    self.MainTank:SetPoint("BOTTOMRIGHT", iconAnchor,"TOPRIGHT", 0, 0)
+    self.MainTank:SetHeight(8)
+    self.MainTank:SetWidth(8)
+	
+    self.MainAssist = self.Health:CreateTexture(nil, "OVERLAY")
+    self.MainAssist:SetPoint("BOTTOMRIGHT", iconAnchor,"TOPRIGHT", 8, 0)
+    self.MainAssist:SetHeight(8)
+    self.MainAssist:SetWidth(8)
+	
 -- Raid Icon
 	self.RaidIcon = self.Health:CreateTexture(nil, "OVERLAY")
 	self.RaidIcon:SetPoint("TOP", self, 0, 0)
-	self.RaidIcon:SetHeight(10)
-	self.RaidIcon:SetWidth(10)
+	self.RaidIcon:SetHeight(8)
+	self.RaidIcon:SetWidth(8)
 	self.RaidIcon:Hide()
 	
 -- ReadyCheck Icon
@@ -366,15 +423,14 @@ local func = function(self, unit)
 	self.RessurectionIndicator:Hide()
 
 -- DebuffHightlight
-	if IsAddOnLoaded("oUF_DebuffHighlight") then 
-		local dbh =self.Health:CreateTexture(nil, "OVERLAY")
-		dbh:SetWidth(16)
-		dbh:SetHeight(16)
-		dbh:SetPoint("TOPLEFT", self.Health, "TOPLEFT", 16, 4)
-		self.DebuffHighlight = dbh
-		self.DebuffHighlightUseTexture = true
-		self.DebuffHighlightBackdrop = true
-	end
+
+	local dbh =self.Health:CreateTexture(nil, "OVERLAY")
+	dbh:SetWidth(16)
+	dbh:SetHeight(16)
+	dbh:SetPoint("TOPLEFT", self.Health, "TOPLEFT", 16, 4)
+	self.DebuffHighlight = dbh
+	self.DebuffHighlightUseTexture = true
+	self.DebuffHighlightBackdrop = true
 
 	if(not unit) then
 		self.SpellRange = true
@@ -758,6 +814,7 @@ function addon:OnEnable()
 				raidFrame:SetBackdropColor(unpack(db.colors.backdropColors))
 			 	raidFrame:EnableMouse(true)
 				raidFrame.db = db.frames.raid
+--				raidFrame:SetStrata("HIGH")
 	self.units.raid = raidFrame
 	self.units.raid.group = {}
 

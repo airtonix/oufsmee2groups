@@ -5,6 +5,8 @@ local configAddon = _G[configAddonName]
 local tinsert = table.insert
 local db = addon.db.profile
 GlobalObject = {}
+local oUF = Smee2Groups_oUFEmbed
+
 -----------------
 --  CONSTANTS --
 configAddon.growthYDirections= {

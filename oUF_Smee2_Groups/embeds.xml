@@ -7,5 +7,8 @@
 	<Include file="Libs\AceConsole-3.0\AceConsole-3.0.xml"/>
 	<Include file="Libs\AceDB-3.0\AceDB-3.0.xml"/>
 	<Include file="Libs\AceEvent-3.0\AceEvent-3.0.xml"/>
-	<Include file="Libs\LibSharedMedia-3.0\lib.xml"/>		
+	<Include file="Libs\LibSharedMedia-3.0\lib.xml"/>
+	<Script  file="Libs\LibHealComm-3.0.lua"/>
+	<Script  file="Libs\LibBanzai-2.0.lua"/>	
+	
 </Ui>

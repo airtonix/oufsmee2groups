@@ -1,4 +1,21 @@
-function NeedsIndicators(unit)
+local parent = debugstack():match[[\AddOns\(.-)\]]
+local global = GetAddOnMetadata(parent, 'X-oUF')
+assert(global, 'X-oUF needs to be defined in the parent add-on.')
+local oUF = _G[global]
+
+local numberize = function(val)
+	if(type(val)~="number")then return end
+    if(val >= 1e3) then
+        return ("%.1fk"):format(val / 1e3)
+    elseif (val >= 1e6) then
+        return ("%.1fm"):format(val / 1e6)
+    else
+        return val
+    end
+end
+string.numberize =  numberize
+
+local function NeedsIndicators(unit)
     return ( not UnitIsGhost(unit) or not UnitIsDead(unit) or UnitIsConnected(unit))
 end
 
@@ -9,7 +26,7 @@ oUF.TagEvents["[missingpp]"] = "UNIT_HEALTH UNIT_MAXHEALTH"
  
  
 oUF.Tags["[shortName]"] = function(u)
-return string.sub(UnitName(u),1,4) or ''
+	return string.sub(UnitName(u),1,4) or ''
 end
 oUF.TagEvents["[shortName]"] = "UNIT_NAME_UPDATE"
  

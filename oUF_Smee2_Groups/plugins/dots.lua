@@ -1,3 +1,9 @@
+local parent = debugstack():match[[\AddOns\(.-)\]]
+local global = GetAddOnMetadata(parent, 'X-oUF')
+assert(global, 'X-oUF needs to be defined in the parent add-on.')
+local oUF = _G[global]
+
+
 local _,playerClass = UnitClass("player")
 
 
@@ -25,7 +31,7 @@ end
 
 oUF.indicators={
 	fonts = {
-		default = "Interface\\Addons\\oUF_Indicators\\Fonts\\visitor.ttf",
+		default = "Interface\\Addons\\"..parent.."\\media\\Fonts\\visitor.ttf",
 	},
 	fontObjects = {
 		["DEFAULT"] = {

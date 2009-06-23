@@ -4,12 +4,10 @@
 ## Author: z.jiricek
 ## Version: 0.013
 ## X-eMail: zenobius.jiricek@gmail.com
-
-
-
 ## OptionalDeps: SharedMedia,  oUF_Smee2_Indicators
-## RequiredDeps: oUF,  oUF_Smee2_Groups
+## RequiredDeps: oUF_Smee2_Groups
 ## LoadOnDemand: 1
+## X-oUF: Smee2Groups_oUFEmbed
 
 embeds.xml
 core.lua
