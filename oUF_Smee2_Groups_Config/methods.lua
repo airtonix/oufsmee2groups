@@ -90,7 +90,7 @@ function configAddon:DimensionFrames(type)
 		 "xOffSet",        db.spacing,
 		 "point",          db.anchorFromPoint)
 	end
-	addon:updateRaidFrame()
+	addon:OriginalUpdateRaidFrame()
 end
 
 -------------
@@ -302,6 +302,10 @@ function configAddon:SetGroupOption(info,value)
 	end
 	
 	profile[setting] = value
+	
+	if(setting == "showInRaid")then
+		addon:toggleGroupLayout()
+	end
 	
 	self.addon:updateRaidFrame()
 end

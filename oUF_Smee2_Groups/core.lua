@@ -361,29 +361,30 @@ local func = function(self, unit)
 --==========--
 --Master Loot Icon
 	local iconAnchor = self.FontObjects.health.object
+	local iconOffset  = self.db.FontObjects.health.font.size/2
 	self.MasterLooter = self.Health:CreateTexture(nil, "OVERLAY")
-	self.MasterLooter:SetPoint("BOTTOMLEFT", iconAnchor,"TOPLEFT", 0, 0)
+	self.MasterLooter:SetPoint("CENTER", iconAnchor,"CENTER", 8, iconOffset)
 	self.MasterLooter:SetHeight(8)
 	self.MasterLooter:SetWidth(8)
 
 --Leader Icon
 	self.Leader = self.Health:CreateTexture(nil, "OVERLAY")
-	self.Leader:SetPoint("BOTTOMLEFT", iconAnchor,"TOPLEFT", 8, 0)
+	self.Leader:SetPoint("CENTER", iconAnchor,"CENTER", 0, iconOffset)
 	self.Leader:SetHeight(8)
 	self.Leader:SetWidth(8)
 --Raid Assist
     self.Assistant = self.Health:CreateTexture(nil, "OVERLAY")
-    self.Assistant:SetPoint("BOTTOMLEFT", iconAnchor,"TOPLEFT", 8, 0)
+    self.Assistant:SetPoint("CENTER", iconAnchor,"CENTER", 0, iconOffset)
     self.Assistant:SetHeight(8)
     self.Assistant:SetWidth(8)
 	
     self.MainTank = self.Health:CreateTexture(nil, "OVERLAY")
-    self.MainTank:SetPoint("BOTTOMRIGHT", iconAnchor,"TOPRIGHT", 0, 0)
+    self.MainTank:SetPoint("CENTER", iconAnchor,"CENTER", -8, iconOffset)
     self.MainTank:SetHeight(8)
     self.MainTank:SetWidth(8)
 	
     self.MainAssist = self.Health:CreateTexture(nil, "OVERLAY")
-    self.MainAssist:SetPoint("BOTTOMRIGHT", iconAnchor,"TOPRIGHT", 8, 0)
+    self.MainAssist:SetPoint("CENTER", iconAnchor,"CENTER", -8, iconOffset)
     self.MainAssist:SetHeight(8)
     self.MainAssist:SetWidth(8)
 	
@@ -728,7 +729,7 @@ function addon:OriginalUpdateRaidFrame(padding,margin)
 	local bottom = 0
 	local left = 0
 	local right = 0
-
+	local _,_,_,margin = self.units.raid.group[self.groupMap.raid[firstGroupWithPeople]]:GetPoint()
 	local height = 0
 	for i=1,numberOfGroupsWithPeople do 
 		height = height + (db.unit.height + db.group[self.groupMap.raid[i]].anchorY)
@@ -736,7 +737,7 @@ function addon:OriginalUpdateRaidFrame(padding,margin)
 	height = height + db.group.One.anchorY
 	
 	raidFrame:SetHeight(height)
-	raidFrame:SetWidth((db.unit.width + db.unit.spacing) * largestNumberOfPartyMembers + db.unit.spacing)
+	raidFrame:SetWidth((db.unit.width + db.unit.spacing) * largestNumberOfPartyMembers + margin)
 	raidFrame:Show()
 	
 end
@@ -765,7 +766,22 @@ function addon:PLAYER_REGEN_ENABLED()
 	self:Debug("PLAYER_REGEN_ENABLED")
 	self:toggleGroupLayout()
 end
-
+function addon:ZONE_CHANGED()
+	self:Debug("ZONE_CHANGED")
+	self:toggleGroupLayout()
+end
+function addon:PARTY_LEADER_CHANGED()
+	self:Debug("PARTY_LEADER_CHANGED")
+	self:toggleGroupLayout()
+end
+function addon:PARTY_MEMBERS_CHANGED()
+	self:Debug("PARTY_MEMBERS_CHANGED")
+	self:toggleGroupLayout()
+end
+function addon:PLAYER_LOGIN()
+	self:Debug("PLAYER_LOGIN")
+	self:toggleGroupLayout()
+end
 function addon:RAID_ROSTER_UPDATE()
 	self:Debug("RAID_ROSTER_UPDATE")
 	self:toggleGroupLayout()
@@ -876,11 +892,12 @@ function addon:OnEnable()
     self.units.party.group.players.groupName = 'unit'
 	self:toggleGroupLayout()
 
-	--self:RegisterEvent('ZONE_CHANGED')
-	--self:RegisterEvent('PARTY_LEADER_CHANGED')
-	--self:RegisterEvent('PARTY_MEMBERS_CHANGED')
+	self:RegisterEvent('ZONE_CHANGED')
+	self:RegisterEvent('PARTY_LEADER_CHANGED')
+	self:RegisterEvent('PARTY_MEMBERS_CHANGED')
+	self:RegisterEvent('PLAYER_REGEN_ENABLED')
 	self:RegisterEvent('RAID_ROSTER_UPDATE')
-	--self:RegisterEvent('PLAYER_LOGIN')
+	self:RegisterEvent('PLAYER_LOGIN')
 	--self:RegisterEvent('UNIT_SPELLCAST_SUCCEEDED')
 	
 	self.units.party.group.pets = {
