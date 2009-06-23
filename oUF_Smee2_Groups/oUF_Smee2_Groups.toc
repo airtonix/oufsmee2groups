@@ -2,11 +2,12 @@
 ## Title: oUF_|cff336633Smee2|r_Groups
 ## Notes: raid & party layout for oUF.
 ## Author: z.jiricek
-## Version: 0.013
 ## X-eMail: zenobius.jiricek@gmail.com
 
+## Version: 30101.113
+
 ## SavedVariables: oUF_Smee2_GroupsDB
-## OptionalDeps: oUF_Banzai, oUF_HealComm, oUF_DebuffHighlight,oUF_SpellRange, oUF_ReadyCheck, oUF_Smee2_Indicators
+## OptionalDeps: 
 ## DefaultState: enabled
 ## X-oUF: Smee2Groups_oUFEmbed
 
