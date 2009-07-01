@@ -11,19 +11,30 @@ local layoutName = "oUF_Smee2_Groups"
 local addon_Settings = oUF_Smee2_Groups_Settings
 local configName = layoutName.."_Config"
 
-
 _G[layoutName] = LibStub("AceAddon-3.0"):NewAddon(layoutName, "AceConsole-3.0", "AceEvent-3.0")
 local addon = _G[layoutName];
-	GlobalObject = {}
-	addon.LSM = LibStub("LibSharedMedia-3.0")
+	addon.GlobalObject = {}
 	addon.build = {}
 	addon.build.version, addon.build.build, addon.build.date, addon.build.tocversion = GetBuildInfo()
 	addon.PlayerTargetsList = {}
 
+----------------------------
+-- Debug
+function addon:Debug(msg)
+	if self.db.profile.enabledDebugMessages then
+		self:Print(SELECTED_CHAT_FRAME,"|cFFFFFF00Debug : |r"..msg)
+	end
+end
+function addon:ToggleDebug()
+	self.db.profile.enabledDebugMessages=not self.db.profile.enabledDebugMessages
+	self:Print(SELECTED_CHAT_FRAME,"Debug messages : "..(self.db.profile.enabledDebugMessages and "ON" or "OFF"))
+end
 function addon:SaveObjectForDebug(label,obj)
-	GlobalObject[#GlobalObject+1] = {label,obj}
+	self.GlobalObject[#self.GlobalObject+1] = {label,obj}
 end
 
+----------------------------
+-- tools
 local numberize = function(val)
 	if(type(val)~="number")then return end
     if(val >= 1e3) then
@@ -36,7 +47,7 @@ local numberize = function(val)
 end
 string.numberize =  numberize
 
-function round(num, idp)
+local function round(num, idp)
     if idp and idp>0 then
         local mult = 10^idp
         return math.floor(num * mult + 0.5) / mult
@@ -44,79 +55,147 @@ function round(num, idp)
     return math.floor(num + 0.5)
 end
 math.round = round
-	
-local LDB = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(layoutName, {
+
+local function Hex(r, g, b)
+   if type(r) == "table" then
+      if r.r then r, g, b = r.r, r.g, r.b else r, g, b = unpack(r) end
+   end
+   return string.format("|cff%02x%02x%02x", r*255, g*255, b*255)
+end
+
+local function getPercent(total,index,dec) return round(index / total,dec) end
+
+local function CompressTable(input,modifierFunction)
+   local keys = {}
+   for value,key in pairs(input)do
+      key = key or 0
+      if not keys[key] then keys[key] = {} end
+      table.insert(keys[key], modifierFunction~=nil and modifierFunction(value) or value)
+   end
+   return keys
+end
+
+local function SortTableByKey(input,midIndexSearch)
+   local output = {}
+   local index = 1   
+   local users 
+   local midIndex = false
+   for key,data in pairs(input)do
+      midIndex = ((midIndex==false) and table.concat(data,","):gmatch(midIndexSearch)()) and index or midIndex
+      output[index] = {
+         key = key,
+         data = data
+      }      
+      index = index + 1
+   end   
+   table.sort(output,function(a,b) return tonumber(a.key) > tonumber(b.key) end)
+   return output,midIndex
+end
+
+
+----------------------------
+-- LibDataBroker & Minimap Icon
+local ldb =  LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(layoutName, {
 	label = "|cFF006699oUF|r_|cFFFF3300Smee|r_Groups",
 	type = "launcher",
-	icon = "Interface\\Icons\\Spell_Nature_StormReach",
+	icon = "Interface\\Icons\\INV_Letter_06",
 })
-
-function LDB.OnClick(self, button)
+ldb.OnClick =  function(self, button)
 	if addon.db.profile.enabled then
-		if button == "RightButton" then
-
+		if button == "RightButton" then			-- RIGHT CLICK
 				if IsAltKeyDown() then
-					if IsControlKeyDown() then
-						-- alt + ctrl
-					elseif IsShiftKeyDown() then
-						-- alt + shift
-					else
-						-- only alt
+					if IsControlKeyDown() then		-- alt + ctrl
+					elseif IsShiftKeyDown() then	-- alt + shift
+					else												-- alt
 					end				
 				elseif IsShiftKeyDown()  then
-					if IsControlKeyDown() then
-						-- shift + ctrl
-					else
-						-- only shift
+					if IsControlKeyDown() then		-- shift + ctrl
+					else												-- shift
 					end				
-				elseif IsControlKeyDown() then
-					--
-				else
-						addon:ToggleDebug()
+				elseif IsControlKeyDown() then	-- ctrl
+				else 												-- no modifier
+					addon:ToggleDebug()
 				end
-
-		elseif button == "LeftButton" then
-
+		elseif button == "LeftButton" then		-- LEFT CLICK
 				if IsAltKeyDown() then
-					if IsControlKeyDown() then
-						-- alt + ctrl
-					elseif IsShiftKeyDown() then
-						-- alt + shift
-					else
-						-- only alt
+					if IsControlKeyDown() then		-- alt + ctrl
+					elseif IsShiftKeyDown() then	-- alt + shift
+					else												-- alt
 					end				
 				elseif IsShiftKeyDown()  then
-					if IsControlKeyDown() then
-						-- shift + ctrl
-					else
-						-- only shift
+					if IsControlKeyDown() then		-- shift + ctrl
+					else												-- only shift
 						addon:ToggleFrameLock(nil,not addon.db.profile.frames.raid..locked)
 					end				
-				elseif IsControlKeyDown() then
-					--
-				else
+				elseif IsControlKeyDown() then	--
+				else 												-- no modifier
 					addon:OpenConfig()
 				end
-
 		end
-	else
+	else																-- Addon Not Enabled
 		--addon:ToggleActive(true)
 	end
 end
-
-function LDB.OnTooltipShow(tt)
+ldb.OnTooltipShow = function(tt)
 	tt:AddLine(layoutName)
-	tt:AddLine("Debugging "..(addon.db.profile.enabledDebugMessages and "en" or "dis").."abled.")
-	tt:AddLine("--")
-	tt:AddLine("Left Click : Open Config")
-	tt:AddLine("Shift + Left Click : Unlock Raid Frames")
---	tt:AddLine("Shift + Right Click : Unlock Party Frames")
-	tt:AddLine("Right Click : Toggle Debug Messages")
-end
+	tt:AddLine(".: |cffffffffKeyBinds|r")
+	tt:AddDoubleLine("   |cffccffccLeft Click|r", "Open Config")
+	tt:AddDoubleLine("   |cff66ff66Shift|r + |cffccffccLeft Click|r", "Unlock Raid Frames")
+	tt:AddDoubleLine("   |cffccffccRight Click|r", "Toggle Debug Messages")	
+	tt:AddLine(" ")
+	
+	tt:AddDoubleLine(".: |cffffffffDebugging |r","|cff"..(addon.db.profile.enabledDebugMessages and "00ff00en" or "ff0000dis").."abled|r")
+	tt:AddLine(" ")
+	
+	tt:AddLine(".: |cfffffffflibHealComm|r")
+	local data,search =addon.hcomm:GetRaidOrPartyVersions(),UnitName("player")
+	local versions,midIndex = SortTableByKey(CompressTable(data,function(u) 	return Hex( unpack({oUF.colors.class[select(2, UnitClass(u))]}) )..u.."|r" end),search)
+	addon.HealCommVersions = {
+		versions = versions,
+		midIndex = midIndex
+	}
+	local higherColours = {1,1,1, 0,1,0, 0,1,0}    
+	local sameColours = {0,1,0}
+	local lowerColours = {0,1,0, 1,0,0, 1,0,0}
+	local colour
+	local isAbove = true
+	local isBelow = false
+	local state
+	local isPlayer
+	local percent = 0
+	local count = #versions 
+	local users,line = {},{}
+	local cols,rows = 1,1
+	local temp
+	for index,data in pairs(versions)do
+		if index == midIndex then 
+			count = #versions - (midIndex-1)
+			colour = sameColours
+			isAbove, isBelow = false, true
+			weightedIndex = 1
+		elseif isAbove then
+			colour = {oUF.ColorGradient( percent, unpack(higherColours))}
+			weightedIndex = index
+			count = midIndex-1
+		elseif isBelow then
+			colour = {oUF.ColorGradient( percent, unpack(lowerColours))}
+			weightedIndex = weightedIndex + 1
+		end
+		percent = getPercent(count,weightedIndex,2)
+   		
+		if data.key == 0 then
+			colour = {1,0,0}
+			data.key = "Not Installed"
+		end
 
+		tt:AddLine("   [ "..Hex(unpack(colour))..data.key .."|r ]|n     ".. table.concat(data.data,", ").."|n ",nil,nil,nil,1)
+
+		addon:Debug( "[ i:"..index.." wi: ".. weightedIndex.." c: "..  count .."] ["..table.concat(colour,",").."] " .. percent .. "   [ "..Hex(unpack(colour))..data.key .."|r ]" ..  table.concat(data.data,", ")  )
+	end
+end
 function addon:ToggleFrameLock(obj,value)	
 	if value == false then	
-		print("unlocking")
+		print(SELECTED_CHAT_FRAME,"unlocking")
 		obj:SetBackdropColor(.2,1,.2,.5)
 		obj:EnableMouse(true);
 		obj:SetMovable(true);
@@ -143,7 +222,7 @@ function addon:ToggleFrameLock(obj,value)
 				this.db.anchorY = y;
 		end);
 	else
-		print("locking")
+		print(SELECTED_CHAT_FRAME,"locking")
 		obj:SetUserPlaced(false)
 		obj:SetMovable(false);
 		obj:RegisterForDrag("");
@@ -309,12 +388,14 @@ local func = function(self, unit)
 	self.Indicators = {}	
 
 	local db = addon.db.profile
+
 	self.groupType = self:GetParent().groupType
 	self.groupTypeName = self:GetParent().groupName
 	
 --	addon:Debug(self:GetParent():GetName() .. "[ "..tostring(self.groupType) .. " : " .. self.groupTypeName .." ]")
 	local fontDb
 	local groupDb = db.frames[self.groupType]
+	
 	self.db = groupDb.unit -- (self.groupTypeName =="unit" and groupDb["unit"] or groupDb.group[self.groupTypeName])
 
 	self.textures = {
@@ -424,14 +505,23 @@ local func = function(self, unit)
 	self.RessurectionIndicator:Hide()
 
 -- DebuffHightlight
+	self.DebuffHighlightBackdrop = self.db.Decurse.Backdrop
+--	self.DebuffHighlightUseTexture = self.db.Decurse.Icon
+	self.DebuffHighlightAlpha = self.db.Decurse.BackDropAlpha
+	self.DebuffHighlightFilter = self.db.Decurse.Filter
 
-	local dbh =self.Health:CreateTexture(nil, "OVERLAY")
-	dbh:SetWidth(16)
-	dbh:SetHeight(16)
-	dbh:SetPoint("TOPLEFT", self.Health, "TOPLEFT", 16, 4)
-	self.DebuffHighlight = dbh
-	self.DebuffHighlightUseTexture = true
-	self.DebuffHighlightBackdrop = true
+--	local dbh = self.Health:CreateTexture(nil, "OVERLAY")
+--			 dbh:SetWidth(16)
+--			 dbh:SetHeight(16)
+--			 dbh:SetPoint("CENTER", self, "CENTER")
+--	self.DebuffHighlight = dbh
+
+	self.Decurse = {
+		Backdrop = self.DebuffHighlightBackdrop,
+--		Icon = self.DebuffHighlight
+	}
+
+
 
 	if(not unit) then
 		self.SpellRange = true
@@ -447,16 +537,16 @@ function addon:GetClassColor(unit)
 end
 
 function addon:OpenConfig()
-	local aceCfg = LibStub("AceConfigDialog-3.0")
 	if(not IsAddOnLoaded(configName)) then
 		LoadAddOn(configName)
 	end
 
+	local aceCfg = LibStub("AceConfigDialog-3.0")
 	if(aceCfg.OpenFrames[configName])then
 		aceCfg:Close(configName)
 	else
 		InterfaceOptionsFrame:Hide()
-		aceCfg:SetDefaultSize(configName, 700, 650)
+		aceCfg:SetDefaultSize(configName, 600, 650)
 		aceCfg:Open(configName)
 	end
 end
@@ -484,24 +574,6 @@ function addon:ImportSharedMedia()
 			self.LSM:Register(self.LSM.MediaType.FONT, name, data.name)
 		end
 	end
-end
-
-function addon:OnInitialize()
-	self.db = LibStub("AceDB-3.0"):New(layoutName.."DB",addon_Settings)
-	self.enabledDebugMessages = addon.db.profile.enabledDebugMessages
-	self.units = {}
-	self.Layout = layout
-
-	self:RegisterChatCommand("oufsmeegroups", "OpenConfig")
-	self:RegisterChatCommand("rl", "reloadui")
-	self:RegisterChatCommand("rgfx", "reloadgfx")
-	self:ImportSharedMedia()
-
-end
-
-function addon:ToggleDebug()
-	self.db.profile.enabledDebugMessages=not self.db.profile.enabledDebugMessages
-	self:Print("Debug messages : "..(self.db.profile.enabledDebugMessages and "ON" or "OFF"))
 end
 
 function addon:GetGroupFilterString()
@@ -762,6 +834,26 @@ function addon:UNIT_SPELLCAST_SUCCEEDED(event,...)
 end
 
 
+----------------------------
+-- INIT
+function addon:OnInitialize()
+	self.db = LibStub("AceDB-3.0"):New(layoutName.."DB",addon_Settings)
+	self.LSM = LibStub("LibSharedMedia-3.0")
+	self.hcomm=LibStub:GetLibrary("LibHealComm-3.0")
+		
+	self.enabledDebugMessages = addon.db.profile.enabledDebugMessages
+	self.units = {}
+	self.Layout = layout
+
+	self:RegisterChatCommand("oufsmeegroups", "OpenConfig")
+	self:RegisterChatCommand("rl", function() ReloadUI() end)
+	self:RegisterChatCommand("rgfx", function() RestartGx() end)
+	self:ImportSharedMedia()
+
+end
+
+----------------------------
+-- EVENTS
 function addon:PLAYER_REGEN_ENABLED()
 	self:Debug("PLAYER_REGEN_ENABLED")
 	self:toggleGroupLayout()
@@ -787,12 +879,8 @@ function addon:RAID_ROSTER_UPDATE()
 	self:toggleGroupLayout()
 end
 
-function addon:Debug(msg)
-	if self.db.profile.enabledDebugMessages then
-		self:Print("|cFFFFFF00Debug : |r"..msg)
-	end
-end
-
+----------------------------
+-- STARTUP
 function addon:OnEnable()
     -- Called when the addon is enabled
     self.units = {}
@@ -825,6 +913,7 @@ function addon:OnEnable()
     oUF:SetActiveStyle"group"
     oUF.indicatorFont = oUF.indicatorFont or db.indicatorFont   
 	local raidSettings = db.frames.raid
+	raidSettings.locked = true
 	local raidFrame = CreateFrame('Frame', 'oufraid', UIParent)
 				raidFrame:SetBackdrop(db.textures.backgrounds.default)
 				raidFrame:SetBackdropColor(unpack(db.colors.backdropColors))
@@ -869,6 +958,7 @@ function addon:OnEnable()
 	raidFrame:SetScale(raidSettings.scale)
 
   	local partySettings = db.frames.party
+  	partySettings.locked = true
   	self.units.party = {}
     self.units.party.group = {}
     self.units.party.group.players = oUF:Spawn("header", "oufparty")
@@ -940,21 +1030,39 @@ function addon:OnEnable()
 		groupType	=	'party',
 		groupName	=	'unit',
 	}	
---[[
+
 	----------------
 	--	MAINTANKS	--
 	----------------
-	local tank = oUF:Spawn('header', 'oufmaintank')
-	tank:SetManyAttributes('showRaid', true, 'groupFilter', 'MAINTANK', 'yOffset', -5)
-	tank:SetPoint('BOTTOM', UIParent, 'BOTTOM',180, 255)
-	tank:Show()
-	self.units.tank = tank
-	local assist = oUF:Spawn('header', 'oufmainassist')
-	assist:SetManyAttributes('showRaid', true, 'groupFilter', 'MAINASSIST', 'yOffset', -5)
-	assist:SetPoint('BOTTOM', tank, 'TOP', 0, 10)
-	assist:Show()
-	self.units.assist = assist
-	
+	--[[
+	local maintankSettings = db.frames.maintank
+	maintankSettings.locked = true
+	local maintank = oUF:Spawn('header', 'oufmaintank')
+			maintank:SetManyAttributes('showRaid', true, 'groupFilter', 'MAINTANK', 'yOffset', -5)
+		--	maintank:SetPoint('TOPLEFT', self.units.raid, 'TOPRIGHT',10, 0)
+			maintank:SetPoint(
+				maintankSettings.group.anchorFromPoint,
+				self.units[maintankSettings.group.anchorTo] or UIParent,
+	    		maintankSettings.group.anchorToPoint,
+	    		maintankSettings.group.anchorX,
+	    		maintankSettings.group.anchorY)
+	    		
+			maintank.groupType = 'maintank'
+			maintank.groupName = 'group'
+			self.units.maintank = maintank
+			maintank:Show()
+
+	local mainassistSettings = db.frames.mainassist
+
+	local mainassist = oUF:Spawn('header', 'oufmainassist')
+			mainassist:SetManyAttributes('showRaid', true, 'groupFilter', 'MAINASSIST', 'yOffset', -5)
+			mainassist:SetPoint('TOPRIGHT', self.units.raid, 'TOPLEFT',-10, 0)
+			mainassist.groupType = 'mainassist'
+			mainassist.groupName = 'group'
+			self.units.mainassist = mainassist
+			mainassist:Show()
+
+
 	---------------------
 	--	PlayerTargets	--
 	---------------------
@@ -963,7 +1071,7 @@ function addon:OnEnable()
 	self.units.playerTargets:SetPoint('TOPLEFT',UIParent,'TOPLEFT',10,-40)
 	self.units.playerTargets:SetManyAttributes(
 		'nameList', strjoin(",", unpack(self.units.playerTargets.list)),
-		"template", "oUF_Party",
+--		"template", "oUF_Smee2_Groups_PlayerTarget",
 		"yOffset", 3,
 		"xOffSet", 3,
 		"unitsPerColumn",1,
@@ -982,18 +1090,18 @@ function addon:OnEnable()
 			local tuid = (unit and UnitGUID(unit)) or UnitGUID("target")
 			local inList = self.units.playerTargets.list[tuid]
 			if inList then 
-				print("|cFFFFFF00"..unitName.." ["..tuid.."] is already in the playertarget list.")
+				addon:Print(SELECTED_CHAT_FRAME,"|cFFFFFF00"..unitName.." ["..tuid.."] is already in the playertarget list.")
 				return
 			end
 			self.units.playerTargets:SetAttribute("nameList",self.units.playerTargets.InsertTarget(tuid,unitName,nil))
-			print("|cFFFFFF00[".. unitName .."] Inserted")		
+			addon:Print(SELECTED_CHAT_FRAME,"|cFFFFFF00[".. unitName .."] Inserted")		
 		else
-			print("|cFFFFFF00Please select a target or supply a valid raid/party member.")
+			addon:Print(SELECTED_CHAT_FRAME,"|cFFFFFF00Please select a target or supply a valid raid/party member.")
 		end
 	end
 	
 	self.units.playerTargets.InsertTarget = function(guid,name,realm)
-		print (guid,name,realm)
+		addon:Print(SELECTED_CHAT_FRAME,guid,name,realm)
 		local first,output = true,""		
 		self.units.playerTargets.list[guid] = {
 			['name'] = name,
@@ -1008,9 +1116,14 @@ function addon:OnEnable()
 	self.units.playerTargets.clearList=function(unit)
 		self.units.playerTargets.list = {}
 		self.units.playerTargets.list:SetAttribute("nameList", "")
-		print("|cFFFFFF00Cleared")
+		addon:Print(SELECTED_CHAT_FRAME,"|cFFFFFF00Cleared")
 	end
---]]	
+
+--]]
+	self.MinimapIcon = LibStub("LibDBIcon-1.0")
+	self.MinimapIcon:Register(layoutName, ldb, db.minimapicon)
+
+
 end
 
 function addon:OnDisable()

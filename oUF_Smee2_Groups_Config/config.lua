@@ -16,6 +16,11 @@ config.options = {
 			type = 'toggle',
 			get = "GetOption", set = "SetOption",
 		},
+		["minimapicon"] = {
+			name = "Enable Minimap icon",desc = "Toggles on/off the minimap icon.",
+			type = 'toggle',
+			get = "GetOption", set = "SetOption",
+		},
 	},
 }
 
@@ -244,6 +249,26 @@ end
 function config:SetupUnitOptions(groupDb)
 	local db = self.addon.db.profile
 	local output = {
+		['Decurse'] = {
+			type = "group",
+			name = "Debuff Highlighting",
+			get = "GetDecurseOption", set = "SetDecurseOption",
+			order=1,
+			args={
+				["Backdrop"] = {
+					type = "toggle",
+					name = "Highlight Frame", desc = "Highlight the frame when the unit is affected by a removable debuff. Blue = Magic, Purple = Curse, Green = Poison, Brown/Yellow = Disease",
+					order=1,
+				},
+--[[
+				["Icon"] = {
+					type = "toggle",
+					name = "Display Icon", desc = "Display an icon when the unit is affected by a removable debuff.",
+					order=2,
+				},
+--]]
+			}
+		},
 		["FontObjects"] =  {
 			name = "Texts", desc = "Text Elements",
 			type = 'group',
@@ -256,7 +281,8 @@ function config:SetupUnitOptions(groupDb)
 				["statusbar"] = {
 					type = "select",
 					name = "Statusbar",
-					dialogControl = 'LSM30_Statusbar',					disabled = not self.addon.SharedMediaActive,	 				desc = "Texture to use on the bars.",
+					dialogControl = 'LSM30_Statusbar',					get = 'GetTextureOption', set = 'SetTextureOption',
+					disabled = not self.addon.SharedMediaActive,	 				desc = "Texture to use on the bars.",
 					values = AceGUIWidgetLSMlists.statusbar,
 					order=26,
 				},

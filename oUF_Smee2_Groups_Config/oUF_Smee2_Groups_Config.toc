@@ -4,7 +4,7 @@
 ## Author: z.jiricek
 ## X-eMail: zenobius.jiricek@gmail.com
 
-## Version: 30101.113
+## Version: 30101.1143
 
 ## OptionalDeps: SharedMedia
 ## RequiredDeps: oUF_Smee2_Groups

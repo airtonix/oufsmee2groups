@@ -4,10 +4,9 @@
 ## Author: z.jiricek
 ## X-eMail: zenobius.jiricek@gmail.com
 
-## Version: 30101.113
+## Version: 30101.1143
 
 ## SavedVariables: oUF_Smee2_GroupsDB
-## OptionalDeps: 
 ## DefaultState: enabled
 ## X-oUF: Smee2Groups_oUFEmbed
 
@@ -27,7 +26,6 @@ core.lua
 
 plugins\aggro.lua
 plugins\assist.lua
-
 plugins\healcomm.lua
 plugins\ready.lua
 plugins\tags.lua

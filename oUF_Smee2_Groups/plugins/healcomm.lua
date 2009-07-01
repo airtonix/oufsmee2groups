@@ -31,10 +31,10 @@ local playerHeals = 0
 local playerTarget = ""
 oUF.debug=false
 
-local layoutPath = "Interface\\Addons\\"..parent
+local layoutPath = "Interface\\Addons\\oUF_Smee2_Groups"
 local mediaPath = layoutPath.."\\media\\"
 local font, fontSize = mediaPath.."\\Fonts\\visitor.ttf", 11		-- The font and fontSize
-local healLineTexture = mediaPath.."\\line"
+local healLineTexture = mediaPath.."Line"
 local function round(num, idp)
   if idp and idp>0 then
     local mult = 10^idp

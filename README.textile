@@ -1,0 +1,36 @@
+h2. Summary
+
+oufsmeegroups is a radframe layout powered by oUF.
+
+It hopes to provides an extensive yet simple configuration interface by using the ace3config realted code libraries.
+
+Any textures and fonts you have availble via SharedMedia will be available for use in the configuration interface.
+
+
+h2. Instructions
+
+The configuration interface can be accessed via the follwoing methods : 
+* chat slash command /oufsmeegroups
+
+
+h2. Todo
+
+This document tracks things that need to be improved within this project.
+
+* configuration interface for the  indicator dots.
+* changing of statusbar textures
+
+h2. Change Log
+
+
+v1.1142 @ Sunday, June 28 2009
+* minimap icon provided
+* error with incorrect library implementation fixed. config interface will now load properly when there is no other addons using ace3dialog
+
+v1.114 @ Sunday, June 28 2009
+* LDB Tooltip has colouring and a list of libHealComm versions of raid/party members.
+
+v0.011 @ Saturday 20th June
+* fixed error with frame lock
+* inserted more config controls that work. unit width, height and spacing should work now.
+* changed the ldb icon functionality to match oUF_Smee2, party frame (un)lock coming soon
